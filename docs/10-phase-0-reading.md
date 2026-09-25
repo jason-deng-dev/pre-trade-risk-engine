@@ -65,7 +65,7 @@ Three artifacts, in increasing order of difficulty. The first two exist to make 
 **Transferable benchmark hygiene** (banked from the OSTEP ch. 19/14 homeworks — apply to every number you ever produce):
 - **Observable side effects:** the compiler deletes loops whose results nobody reads — print/accumulate results, or use Google Benchmark's `DoNotOptimize` (ch. 19 hw Q5).
 - **`steady_clock`, never `system_clock`;** warmup iterations separated from measured ones; enough repetitions that timer precision (ch. 19 hw Q1) can't distort the mean.
-- **First-touch:** freshly allocated pages cost demand-zeroing on first access (ch. 19 hw Q7) — pre-touch buffers before timing, or your first iteration lies.
+- **First-touch:** freshly allocated pages cost demand-zeroing on first access (ch. 19 hw Q7) — pre-touch buffers before timing, or your first iteration lies. (Ch. 21's measurement homework makes this visible; the sweep it describes becomes a Phase 2 artifact.)
 - **Pin before measuring** (`sched_setaffinity` — ch. 19 hw Q6): unpinned threads bounce cores and inherit foreign TLB/cache state.
 
 **🔓 Unlocked — Backtester (do this after Phase 1, while the ring is fresh):** port this exact ring into the backtester as the Monte Carlo job/result transport and reproduce the bit-identical-hash property. Your resume claims lock-free SPSC queues with specific numbers — this makes the claim true, backed by the same per-memory-order justifications you just wrote down. Protects the credibility of every other number on the page. Queued in [`40-deepening-queue.md`](40-deepening-queue.md).

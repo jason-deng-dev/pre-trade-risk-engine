@@ -18,6 +18,7 @@
   - *Why:* an allocation on the hot path is an unbounded latency event wearing a disguise — a lock, a page fault, a syscall, a cache eviction, all at once, at a moment you don't choose.
   - *Reach for:* global operator interposition rather than a custom allocator — interposition catches the hidden allocations inside third-party code, which is exactly where they hide.
   - *Learn:* that "we don't allocate" is a claim requiring an instrument, and that the interesting failures are in code you didn't write.
+  - **What the proof does not cover:** it shows nothing *new* was allocated — not what happened to the pages you already hold. Pair it with `page-faults` and RSS under live load, and answer this for the design doc: after warmup, why doesn't RSS shrink when the process frees memory? (Pages go back to the allocator and become page cache; the OS reclaims them only under pressure.) Twenty minutes of `vmstat 1` alongside the running engine answers it on your own machine. That's the honest boundary on the zero-alloc claim — *no allocation* is not the same as *no page traffic*, and a reviewer who knows the difference will ask.
 - **AI hook:** keep the benchmark harness able to swap the synthetic strategy for a future decision backend, and to record batch size as a first-class dimension. Do not build the backend here; preserve the extension point (steps E+F in [`20-ai-extension.md`](20-ai-extension.md)).
 
 - **Ablation study — the centerpiece.** One table, every "what did X buy you?" answered:
