@@ -1,1 +1,10 @@
-- [x] OSTEP Virtualization done
+- [x] OSTEP Virtualization 
+- [x] CiA c1-4 
+- [ ] OSTEP 28
+- [ ] Preshing's two memory-ordering posts
+- [ ] McKenney Memory Barrieor c1-4
+- [ ] CiA c5
+- [ ] SPSC Ring
+- [ ] CiA C6->11b
+- [ ] OSTEP 33, 29.1, 31
+- [ ] Inside the Machine (Stokes)

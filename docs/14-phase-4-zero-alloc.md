@@ -18,6 +18,8 @@
   - *Why:* an allocation on the hot path is an unbounded latency event wearing a disguise — a lock, a page fault, a syscall, a cache eviction, all at once, at a moment you don't choose.
   - *Reach for:* global operator interposition rather than a custom allocator — interposition catches the hidden allocations inside third-party code, which is exactly where they hide.
   - *Learn:* that "we don't allocate" is a claim requiring an instrument, and that the interesting failures are in code you didn't write.
+  - **Boundary of the instrument (added 2026-09-28): interposing `operator new`/`delete` does not see raw `malloc`/`free`.** Any C library, and Google Benchmark itself, allocates through C functions that never touch the C++ operators — so a hidden allocation on the measured path would pass the gate while the gate reports clean. Close it rather than document it: interpose `malloc`/`free`/`realloc` as well, in the same preloaded library as the operators, and run the check as an `LD_PRELOAD` build so dynamically-linked callers are covered too (a `--wrap` at link time only catches calls resolved inside your own binary). Cross-check at least once with a heap profiler on the full run. The claim you are buying is "the process did not allocate on the hot path," and that claim is only as strong as the widest hook you installed.
+
   - **What the proof does not cover:** it shows nothing *new* was allocated — not what happened to the pages you already hold. Pair it with `page-faults` and RSS under live load, and answer this for the design doc: after warmup, why doesn't RSS shrink when the process frees memory? (Pages go back to the allocator and become page cache; the OS reclaims them only under pressure.) Twenty minutes of `vmstat 1` alongside the running engine answers it on your own machine. That's the honest boundary on the zero-alloc claim — *no allocation* is not the same as *no page traffic*, and a reviewer who knows the difference will ask.
 - **AI hook:** keep the benchmark harness able to swap the synthetic strategy for a future decision backend, and to record batch size as a first-class dimension. Do not build the backend here; preserve the extension point (steps E+F in [`20-ai-extension.md`](20-ai-extension.md)).
 
@@ -25,13 +27,18 @@
 
 | Configuration | p50 | p99 | p99.9 | IPC | Branch-miss | dTLB-miss |
 | --- | --- | --- | --- | --- | --- | --- |
-| Baseline (naive) |  |  |  |  |  |  |
+| Reference (straightforward implementation) |  |  |  |  |  |  |
+| Baseline (this architecture, optimizations removed) |  |  |  |  |  |  |
 | + cacheline isolation |  |  |  |  |  |  |
 | + branchless |  |  |  |  |  |  |
 | + huge pages |  |  |  |  |  |  |
 | + NUMA pinning |  |  |  |  |  |  |
 
 Ablation discipline: one fixed workload and one focused `perf stat` event set across all rows; A/B/A or interleaved repetitions; every raw output and environment log under `bench/results/` per the [playbook](30-perf-playbook.md). IPC is explanatory, not the primary claim. Rows that measure as null stay in the table — a null with a mechanism is a finding, and removing it is how a table becomes marketing.
+
+**Two baselines, and the difference matters.** The **reference** row is the implementation a competent engineer writes in a week: a mutex around shared state, `std::unordered_map` for the ledger, heap allocation per decision, a chain of early-exit branches. It is not a strawman — it is what the code looks like before you know what you know. The **baseline** row is *this* architecture with the optimizations removed one at a time, which is what isolates each optimization's contribution. The ablation table answers "what did each optimization buy"; the reference row answers the question a reviewer actually asks, which is "why would I want yours instead of the obvious thing." Report the final-vs-reference delta as the headline sentence and keep the ladder underneath it as the evidence.
+
+The reference implementation is built **once**, in Phase 1, and serves two purposes: it is the differential-testing oracle for the fuzzer (see [`11-phase-1-core.md`](11-phase-1-core.md)) and row 0 of this table. Building it here instead means writing it twice.
 
 **Never cut:** correctness (Phase 1), ablation, zero-alloc.
 

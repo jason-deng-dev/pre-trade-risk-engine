@@ -24,7 +24,7 @@
 | [`13-phase-3-feed.md`](13-phase-3-feed.md) | Multicast simulator, feed handler, gap/snapshot recovery, latency methodology |
 | [`14-phase-4-zero-alloc.md`](14-phase-4-zero-alloc.md) | `new`/`delete` interposition and the ablation study |
 | [`15-phase-5-docs.md`](15-phase-5-docs.md) | README, design doc, proof pack, post-project reading queue |
-| [`20-ai-extension.md`](20-ai-extension.md) | The AI Infrastructure Extension Spine: steps H→B→C→E→F→A→D, its curriculum and drills |
+| [`20-ai-extension.md`](20-ai-extension.md) | The AI Infrastructure Extension Spine: steps H→B→C→E→F→A→G→D, its curriculum and drills |
 | [`30-perf-playbook.md`](30-perf-playbook.md) | `perf stat` from zero to claim discipline — referenced by Phases 0, 2, and 4 |
 | [`40-deepening-queue.md`](40-deepening-queue.md) | Cross-project additions to the Orderbook and Backtester, gated on core progress |
 | [`90-resumes.md`](90-resumes.md) | House style, distilled bullets, keyword discipline, Appendix A (quant) and B (AI-infra) |
@@ -79,7 +79,7 @@ The learning loop for every phase is:
 | 2 | False sharing, branch prediction, TLB pressure, SMT/NUMA topology, experimental control |
 | 3 | UDP semantics, gap/snapshot recovery, tail-latency methodology, coordinated omission |
 | 4 | Allocation behavior, object lifetime, interposition, ablation discipline |
-| AI extension | Feature pipelines, leakage control, model export, inference serving, CUDA, evaluation rigor |
+| AI extension | Feature pipelines, leakage control, model export, inference serving, CUDA and kernel optimization, transformer internals, evaluation rigor |
 
 **AI integration rule:** during the core build, make only small design accommodations for future AI modules — versioned replay inputs, a clean feature-computation boundary, reusable latency harnesses, deterministic seeding. The actual AI builds activate at their natural prerequisite gates when the core is green. This keeps AI infrastructure inside the learning pipeline without letting it cannibalize the core quant-dev ship. The inline hooks are marked **AI hook** in the phase docs; the pipeline itself is in [`20-ai-extension.md`](20-ai-extension.md).
 
@@ -98,15 +98,32 @@ The learning loop for every phase is:
 
 **On the clock — there isn't one.** The sizes above are *ratios*, not a schedule. Read them as: Phase 0 is the bulk of the commitment, roughly equal to everything after it combined; each build phase is about one unit of work. The table exists so you know the shape of what you're signing up for and what to cut first when life compresses it. Track **hours per category** (rule 3), not weeks elapsed. A phase that takes twice as long and lands green is not behind schedule; a phase that lands on time with a skipped gate is.
 
-The **AI Infrastructure Extension Spine** is additional on top: H→B→C→E→F are small items, A is the large one, D is a couple of days. AI modules activate only at their natural prerequisite gates and pause whenever the core slips — the pause is built into the design, not a failure of it.
+The **AI Infrastructure Extension Spine** is additional on top: H→B→C→E→F are small items, A is the large one (it now carries the kernels bench), G is a week and a half, D is a couple of days. AI modules activate only at their natural prerequisite gates and pause whenever the core slips — the pause is built into the design, not a failure of it.
 
 **Cut order if time runs short:**
 
 1. SIMD batch checks (already a stretch — the design-doc Q&A bullets survive the cut)
 2. Half of Phase 2's experiments (keep NUMA + false sharing; branchless and huge pages are the cut candidates)
 3. Snapshot-recovery *robustness* polish (keep gap detection + one working recovery path)
+4. Step G, the tiny decoder — the one AI-spine item that is genuinely optional on a quant-primary sequence. Its drills survive as vocabulary answers; the artifact does not. Cut G before cutting any core-phase item, and cut A5 (the quantized kernel) before cutting the GEMM ladder.
 
 **Never cut:** Phase 0 reading and the SPSC ring (it's the longest block, and that's the point — the OSTEP/CiA spine is the foundation everything else stacks on), correctness gate, ablation, zero-alloc verification, the feed handler's gap-detection path.
+
+---
+
+## Execution order amendment (proposed 2026-09-28 — delete if rejected)
+
+Not adopted. Flagged because it affects whether the AI spine ever activates.
+
+Current design gates every AI module on the core spine being green. Phase 0 is the dominant block — roughly equal to everything after it combined — so on the current gating the earliest AI module is several months out, and the failure mode is a shipped risk engine plus three C++ artifacts and no new dimension.
+
+But most of the AI spine does not depend on the risk engine. H needs the Orderbook plus a message replay, not the Phase 3 UDP feed. B, C, and D need only the Backtester. A needs the deterministic seeded CPU Monte Carlo, which exists. Only E and F touch the risk engine's Phase 3 pipeline, and G follows A and E/F.
+
+Proposed change: run H→B→C→D→A→G ahead of the core spine's Phase 2–4 grind, in parallel with the Phase 0–1 reading. Keep E and F gated on Phase 3 exactly as written. This yields an AI-visible resume and the CUDA plus kernel artifacts in roughly six to eight weeks without touching the risk engine's critical path, and it removes the scenario where the ML and GPU assets stay unused until the core ships.
+
+If adopted, it edits three things: H's gate in the [`20-ai-extension.md`](20-ai-extension.md) pipeline table changes from "After Phase 3, if the feed/book pipeline is green" to "After the Orderbook has a stable replay harness, on either the real feed or the 1M-message replay"; the H build line's `X msgs/sec` number is measured on the replay first and re-measured after Phase 3; and the sequencing note at the end of that doc's curriculum section is updated to match.
+
+Cost, stated honestly: two workstreams at once, which cuts against rule 3's single-category focus and against the project's own "one thing at a time" discipline. Reject this if the reading spine is going slower than the AI work would, because then it just adds a second front.
 
 ---
 
@@ -116,6 +133,7 @@ The **AI Infrastructure Extension Spine** is additional on top: H→B→C→E→
 - Not an execution algo suite — discuss TWAP/VWAP conceptually in interviews.
 - Not kernel bypass — explain *why* it exists (syscall/context-switch overhead); don't demo it.
 - Not a TCP distributed system — one UDP hop + in-process everything else.
+- **Not distributed at all, deliberately (added 2026-09-28).** No replication, no consensus, no NCCL, no multi-node anything. This is a real boundary for AI-platform and training-infrastructure roles, where the hiring signal is distributed systems rather than single-node kernel work. State it as a boundary in interviews rather than hiding it, and note the cheap extension if that door becomes primary: DDIA ch. 5–6 plus one small distributed artifact (a replicated log, or a sharded service with a failover path). Do not add it pre-emptively — it is out of scope for quant dev, which is the primary target.
 - Not Almgren-Chriss, not slippage attribution — uncalibrated models invite unanswerable questions.
 - Not an AVX2 showcase — the design-doc Q&A bullets prove literacy; the build adds little.
 

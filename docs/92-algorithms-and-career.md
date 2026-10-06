@@ -31,4 +31,12 @@
 
 **Documents:** two one-page resume variants ([`90-resumes.md`](90-resumes.md) Appendix A/B); never hybrid. Resume = output of shipped work.
 
-**Sequence (there is no deadline):** Core Quant Spine first (AI hooks inline; extension modules only at green gates) → the core proof pack exists (see [`15-phase-5-docs.md`](15-phase-5-docs.md)) → applications start → remaining AI extension modules → AI variant live. Algorithms parallel throughout. If the core slips, the extension spine pauses; applications do not wait for every AI module. The gate is *the proof pack existing*, not a date — which is the whole reason this plan tracks hours per category instead of weeks elapsed.
+**Sequence (there is no deadline — but there is a hiring calendar, and the plan should not pretend otherwise):**
+
+**Stage 1 — apply at the Phase 1 gate, not at the full proof pack.** The plan as written starts applications only after the complete core proof pack exists, which by the sizing table is 9–12 months out (Phase 0's reading alone is roughly 2,200–2,400 dense pages at the stated 100–140 pages/week, before any build). That is too long to go without interview reps, and interview loops are the instrument that tells you which gaps are real. The Stage-1 proof pack is: the Orderbook and Backtester as shipped (with the credibility patches in [`40-deepening-queue.md`](40-deepening-queue.md) landed), plus the risk core, the correctness gate, and the ablation from Phases 1–2. That is a defensible portfolio. Write the Stage-1 README and design doc at that point, start applying to both tracks, and let the loop tell you what to fix. The risk engine then ships *while* you are interviewing, as an upgrade, rather than as a prerequisite.
+
+**Stage 2 — full proof pack, remaining AI modules, AI variant live.** Unchanged from the original sequence, except that it now runs concurrently with an active job search rather than gating it.
+
+**Review trigger (so a slipping plan has a defined failure state):** if the Phase 0–1 reading is not complete within about six months of start, stop treating the curriculum as a prerequisite and switch to applying with the current portfolio plus whatever has shipped, continuing the spine part-time. A plan with no trigger can silently consume a year.
+
+Algorithms parallel throughout. If the core slips, the extension spine pauses; applications do not wait for every AI module.

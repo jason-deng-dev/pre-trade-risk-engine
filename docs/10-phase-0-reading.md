@@ -46,6 +46,8 @@ The shape: one linear sequence below — OSTEP spine with per-chapter verdicts, 
 
 **🔨 Build (interleave — start the harness and the false-sharing toy once you finish the memory chapters; the SPSC ring stays the capstone, after the reads):**
 
+> **Dead-zone fix (added 2026-09-28).** As ordered, the first seventeen items are pure input: roughly three to four months of reading before the first artifact exists, with everything gated behind it. That is the longest stretch in the plan with nothing to show, aimed squarely at the failure mode the plan names for itself. Fix it without losing any learning: the harness and the false-sharing toy need only OSTEP 13–23 (item 11) plus the tools block (item 30) — move the tools block to run alongside items 11–13 and start building there. **SPSC ring v1 (all-`seq_cst`) needs only OSTEP 28 (item 14) and CiA ch. 1–3 (item 8)**, so it can ship at roughly the one-third mark: v1 is written *by faith in `seq_cst`* on purpose, which is exactly the prototype-then-relax discipline CiA 7.3 prescribes, so writing it before CiA ch. 5 costs nothing pedagogically and buys an artifact early. v2's relaxations still wait for item 17, unchanged. Nothing else moves.
+
 Three artifacts, in increasing order of difficulty. The first two exist to make the third measurable.
 
 - **The measurement harness.**
@@ -68,7 +70,7 @@ Three artifacts, in increasing order of difficulty. The first two exist to make 
 - **First-touch:** freshly allocated pages cost demand-zeroing on first access (ch. 19 hw Q7) — pre-touch buffers before timing, or your first iteration lies. (Ch. 21's measurement homework makes this visible; the sweep it describes becomes a Phase 2 artifact.)
 - **Pin before measuring** (`sched_setaffinity` — ch. 19 hw Q6): unpinned threads bounce cores and inherit foreign TLB/cache state.
 
-**🔓 Unlocked — Backtester (do this after Phase 1, while the ring is fresh):** port this exact ring into the backtester as the Monte Carlo job/result transport and reproduce the bit-identical-hash property. Your resume claims lock-free SPSC queues with specific numbers — this makes the claim true, backed by the same per-memory-order justifications you just wrote down. Protects the credibility of every other number on the page. Queued in [`40-deepening-queue.md`](40-deepening-queue.md).
+**🔓 Unlocked — the ring's reasoning transfers to the risk engine, not the Backtester.** The obvious move is to port this ring into the backtester as the Monte Carlo job/result transport. Don't: that sampler is embarrassingly parallel with uniform per-path cost and exactly one output slot per path, so it is already correctly parallelized by index partition, and a queue there adds handoff latency and a contended cacheline for no throughput. The resume bullet was corrected to describe what the code does rather than the reverse. What transfers is the *justification discipline* — every memory order you argue for here is the reasoning that governs the risk engine's fill → position ledger, which is a genuine single-producer/single-consumer path. If you want the ring in the backtester, [`40-deepening-queue.md`](40-deepening-queue.md) now routes it to streaming ingest, where a producer/consumer pair actually exists.
 
 **✅ Verify:** Can you explain why x86 makes acquire/release nearly free but `seq_cst` needs a full fence — now from *your own ring's* disassembly, not just the books? Can you explain the toy's cache-miss spike mechanism in two sentences? Is your ring v2 TSan-clean with a written justification for every memory order?
 

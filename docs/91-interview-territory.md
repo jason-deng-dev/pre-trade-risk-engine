@@ -61,7 +61,7 @@ Weighting: ~70% coding/systems, ~20% design + math, ~10% behavioral/domain. Cove
 - Prefetching (hardware stride/pattern; software `prefetch`; when harmful)
 - **NUMA quantified:** local vs. remote atomics (~5×), their cloud measurement
 - Perf analysis: counters (IPC, branch-misses, cache-misses, dTLB-misses), top-down vocabulary, `rdtsc` vs `clock_gettime`
-- FP: IEEE-754, rounding modes, denormal cliffs, FMA contraction, fast-math dangers, cross-vendor determinism (their CUDA/HIP claim)
+- FP: IEEE-754, rounding modes, denormal cliffs, FMA contraction, fast-math dangers, cross-vendor determinism (a **step A** claim, and only the CPU↔GPU half is yours to own; HIP/ROCm is ruled out by [`20-ai-extension.md`](20-ai-extension.md) — never a translation layer — so do not carry a cross-*vendor* claim you are not building)
 
 *Coverage: Drepper + COD targeted + Phase 2.*
 
@@ -93,6 +93,8 @@ Weighting: ~70% coding/systems, ~20% design + math, ~10% behavioral/domain. Cove
 
 *Coverage: the projects ARE the designs; **[ADD]** whiteboard reps of the repertoire list.*
 
+**[ADD] is a scheduled block, not an annotation (added 2026-09-28).** Every [ADD] marker in this appendix is work with no slot on the calendar, which is the same as work that will not happen. Give them one: whiteboard reps of the repertoire list, the two section-A [ADD] items, and the UB reps — run as a fixed weekly slot from the moment Stage-1 applications start (see [`92-algorithms-and-career.md`](92-algorithms-and-career.md)). Design-round reps also need a partner or a mock service; the explain-loop's recorded walkthroughs cover the solo half, and nothing in the plan currently covers the live half.
+
 ### H. Math / probability (~5–10% QD)
 
 - EV, conditional probability, Bayes, combinatorics, expected-value games; distributions, CLT, CIs (owned via Monte Carlo); Fermi estimation; fast mental math; Markov chains (their domain); basic linear algebra
@@ -101,10 +103,12 @@ Weighting: ~70% coding/systems, ~20% design + math, ~10% behavioral/domain. Cove
 ### I. Behavioral (~5–10% — the "pod trust" filter)
 
 - Six story bank (conflict, failure, ambiguity, deadline, deep-debug, disagreement) from real projects; why-trading/firm narrative coherence; ownership signals (sole engineer, retained consultant)
+- **The career-change narrative is its own story, and the most likely one to be probed (added 2026-09-28).** Economics honours, a Japan-based automation company, content-pipeline work — the bridge to trading has to be a story you can tell in sixty seconds without hedging. The version that works is the one the other artifacts already support: you built the tooling because you wanted an answer to a trading question, the Monte Carlo engine shipped for a real business decision, and you kept descending the stack until the interesting problems were systems problems. Rehearse it out loud like any other drill. The failure mode is discovering it for the first time in the room.
 
 ### J. Market microstructure domain (~5%)
 
 - Order types (limit/market/stop/IOC/FOK/peg), price-time priority, book mechanics, spread, adverse selection basics; latency economics (tick-to-trade, jitter, colocation); exchange anatomy (gateways, feeds, matching); light regulatory vocabulary (Reg NMS, market-maker obligations)
+- **Pre-trade control set (added 2026-09-28, from the Phase 1 domain reading):** price bands/collars, max order size, order-count and message-rate limits, duplicate-order detection, per-instrument vs. aggregate limits, notional vs. quantity and gross vs. net exposure, kill-switch semantics including in-flight orders, self-trade prevention modes (cancel resting / cancel aggressing / cancel both), fail-safe vs. fail-open. Regulatory frame: **SEC Rule 15c3-5** (market access) and MiFID II RTS 6 — named as technical implementations of those control sets, never as compliance work.
 - Their industry-context appendix covers the vocabulary layer
 
 ### K. Resume cross-examination (runs under everything)
