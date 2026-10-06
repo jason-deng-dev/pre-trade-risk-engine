@@ -33,14 +33,14 @@ The shape: one linear sequence below — OSTEP spine with per-chapter verdicts, 
 22. **CiA ch. 9** — full read: thread pools; weight the *concepts* (queue contention, work stealing) over the implementations — you'll contrast pools with your SPSC model in interviews
 23. **CiA ch. 10** — full read (short): `std::execution` policies — know precisely what you're refusing and why
 24. **CiA ch. 11** — full read: designing for testability — read right before the correctness gate (Phase 1 Step 5), where you'll live its material
-25. **OSTEP 33** — skim (event-loop contrast — vocabulary for why your feed handler spins)
-26. **OSTEP extras** (~45 min): §29.1 approximate counters · one semaphore card (ch. 31)
+25. **OSTEP 32 & 33 — read fully.** 
+26. **OSTEP 31 — skim** Semaphores. Read for the concept (producer/consumer, readers/writers) only. C++20 now has std::counting_semaphore, but you will still see the POSIX API in legacy OS-level IPC (shared memory).
 27. **Stokes, *Inside the Machine*** — optional but recommended (~3–4 evenings; before Drepper): concept chapters fully, skim the Pentium 4/PowerPC case studies, never quote its (2006) implementation details
 28. **Drepper §1–3** — read fully (~60 pp; Foundation #1 first half — Phase 2's experiments land on this)
 29. **COD structured read, part 1 — alongside Drepper §1–3** (read *after* each matching Drepper section; second sources reinforce, they don't build): Ch. 1 (performance/Amdahl); 5.1–5.4 (rigorous caches); 5.10 (MESI — the protocol behind false sharing and atomic costs). Rest of the COD skip-list lives in [`01-reading-map.md`](01-reading-map.md); Phase 2 and Phase 4 slots below; GPU chapters went to the AI extension spine (step A)
 30. **Tools** (~2 hr): work through the [`perf stat` Playbook](30-perf-playbook.md) (Sections 1–3 first, then the learning layers), `man perf-stat`, and the Google Benchmark README → then the Phase 0 builds below (harness + false-sharing toy, if not already done)
 
-**Recorded for completeness — do not schedule:** OSTEP 24–25 (dialogues) · 26–27, 29–32 (covered by CiA in C++ form; extras in step 26 only) · 34 (dialogue) · persistence 36–51 (optional 2-hr skim of 36/39/42; rest cut) · security 52–57 (skipped entirely).
+**Recorded for completeness — do not schedule:** OSTEP 24–25 (dialogues) · 26–30 (covered by CiA in C++ form) · 34 (dialogue) · persistence 36–51 (optional 2-hr skim of 36/39/42; rest cut) · security 52–57 (skipped entirely).
 
 **Anki discipline:** card what you'll use within weeks, not everything.
 
