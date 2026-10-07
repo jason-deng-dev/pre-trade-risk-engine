@@ -1,7 +1,7 @@
 - [x] OSTEP Virtualization 
 - [x] CiA c1-4 
 - [x] OSTEP 28
-- [ ] Preshing's two memory-ordering posts
+- [x] Preshing's 4 memory-ordering posts
 - [ ] McKenney Memory Barrieor c1-4
 - [ ] CiA c5
 - [ ] SPSC Ring
