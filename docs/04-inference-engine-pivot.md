@@ -99,6 +99,12 @@ The pivot adds little net study — the systems spine already covers the mechani
 | Circuit breaker / load shedding (Fowler's article; Nygard, *Release It!* stability patterns) | NEW — evening-level | Breaker and shedding patterns |
 | Little's Law | NEW — one section, applied immediately in the batching curves | Queueing vocabulary for the sweep writeup |
 | ONNX Runtime determinism / execution-provider docs | Retained from old step E | Per-provider determinism; the phase-6 writeup source |
+| **Sarathi-Serve** (Agrawal et al., OSDI 2024) | NEW — read before phase 6 rung 2 | Chunked prefill: the mechanism, and what it costs |
+| **vLLM scheduler + block-manager source** | NEW — reference implementation | The design's actual data structures and preemption policy; read the way step G reads llama.cpp |
+| **HdrHistogram library docs** | NEW — ~30 min | Percentile mechanics: recording, rescaling, merging — whether p99.9 is actually right |
+| **Deterministic replay / simulation-testing writeup** (Wilson's talk; Antithesis posts) | NEW — ~1 hour | Taxonomy of nondeterminism sources; what a "bit-identical" claim must pin |
+| **McKenney, *Is Parallel Programming Hard* — seqlock + RCU chapters** | NEW — targeted chapters | Phase 1's lock-free config publication, named and chosen rather than improvised |
+| **One fair-queueing treatment** (WFQ / deficit round robin) | NEW — ~1 hour | Phase 6's cross-tenant fairness policy, named with a starvation boundary instead of improvised |
 
 **Explain-loop rule (mandatory before phase 6 ships):** cold, spoken, no notes — explain Orca's iteration-level scheduling and vLLM's paging, *why* each beats the naive design, and reconcile both with your own scheduler's choices. This is the feedback substitute for having no mentor; run it seriously.
 

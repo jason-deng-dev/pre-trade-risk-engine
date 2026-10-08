@@ -26,7 +26,7 @@
 - **Learn:** that application-level reliability is a reimplementation of transport-layer ideas with different tradeoffs; that integration latency is not the sum of component latencies; that a transport's flow control and your admission policy are two different backpressure mechanisms that must agree.
 - **AI hook:** keep a clean, zero-alloc boundary where request features can later feed a model-version-pinned backend without coupling feature code to the serving loop (step H in [`20-ai-extension.md`](20-ai-extension.md)).
 
-**Step 5 — 📖 Read:** Gil Tene's *"How NOT to Measure Latency"* (talk or writeup, ~1 hour) on coordinated omission + HDR histograms.
+**Step 5 — 📖 Read:** Gil Tene's *"How NOT to Measure Latency"* (talk or writeup, ~1 hour) on coordinated omission + HDR histograms, then the **HdrHistogram library's documenting pages** (recording, rescaling, merging, and what "p99.9" means when you merge two histograms — ~30 min). Tene gives you the theory; the library docs give you the mechanics that decide whether your percentiles are actually right.
 
 **Step 6 — 🔨 Build: latency methodology.**
 

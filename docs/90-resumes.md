@@ -138,7 +138,7 @@ Skills: C++17/20 · CUDA · Python/PyTorch · ONNX Runtime · Linux (perf, NUMA,
 
 **Projects** (reordered: the engine leads — it is the flagship)
 
-**Inference Engine — C++17/CUDA** (repo)
+**Low-Latency Inference Engine — C++17/CUDA** (github.com/jason-deng-dev/inference-engine)
 
 - End-to-end low-latency serving stack built as one system: from-scratch transformer decoder, continuous-batching scheduler, admission-control gateway, and a measured CUDA kernel study — single CMake build, every claim regenerable from `bench/`.
 - Decoder: from-scratch GPT-2-class transformer (multi-head attention, KV cache behind a swappable allocator, greedy decode); output verified token-for-token against llama.cpp on fixed prompts; [X] tok/s single-stream, [N] ms TTFT at 2k context; decode at [B]% of peak DRAM bandwidth, roofline-analyzed against the kernel ladder's measured ceiling.

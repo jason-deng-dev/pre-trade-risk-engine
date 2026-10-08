@@ -13,7 +13,7 @@
 
 ## Rung 0 — 📖 Read, then 🔨 the naive reference scheduler
 
-**📖 Read:** **Orca** (Yu et al., OSDI 2022) for iteration-level scheduling — the origin of the design — then **vLLM / PagedAttention** (Kwon et al., SOSP 2023) for KV paging and the memory-budget mechanism. Both are short. Read for the *decision* each paper makes and what it trades away, not for implementation detail. Skim **Pope et al. (2022)** for the batch-economics and KV-memory arithmetic you will reproduce in your own sweep.
+**📖 Read:** **Orca** (Yu et al., OSDI 2022) for iteration-level scheduling — the origin of the design — then **vLLM / PagedAttention** (Kwon et al., SOSP 2023) for KV paging and the memory-budget mechanism. Both are short. Read for the *decision* each paper makes and what it trades away, not for implementation detail. Skim **Pope et al. (2022)** for the batch-economics and KV-memory arithmetic you will reproduce in your own sweep. Then **read one working scheduler's source** the way you read llama.cpp for the decoder: vLLM's scheduler and block manager — Python, read for the policy, not the craft. It is a reference implementation of exactly the design you are about to build, and the papers leave out the parts that decide your data structures (how the running/waiting/swapped sets are actually represented, when preemption fires, how block tables are allocated and freed).
 
 **🔨 Build:** the deliberately naive reference: one request at a time, no batching, FCFS, no admission policy beyond "queue everything." Around a day.
 
@@ -36,11 +36,13 @@
 **Decisions to document (one paragraph each):**
 - Why worst-case projection and reject-at-capacity, versus admit-on-prompt and preempt-on-growth. Name what the alternative would cost (recompute or swap) and why it is a stretch rung rather than the default.
 - Where the KV budget number comes from: total device/CPU memory, weights, activations, and the arithmetic from Pope et al. reproduced on your own machine.
-- Fairness: what prevents one long-lived tenant from consuming the budget. State the policy and its failure mode.
+- Fairness: what prevents one long-lived tenant from consuming the budget. State the policy and its failure mode. The standard machinery has a name — weighted fair queueing and deficit round robin, the same family your rate limiter's cousins use — so read one short treatment of fair queueing before inventing a policy; "how does your scheduler stay fair across tenants" is a standard serving-interview question and "the caps handle it" is a weaker answer than a named policy with a stated starvation boundary.
 
 ---
 
 ## Rung 2 — 🔨 Chunked prefill
+
+**📖 Read:** **Sarathi-Serve** (Agrawal et al., OSDI 2024) — the origin of chunked prefill and the source of its actual mechanism: why splitting prefill into fixed-size chunks and piggybacking them on decode steps bounds the stall, and what it costs. Read it *before* building rung 2, not after; the paper's throughput-latency argument is the thing you will be reproducing on your own machine, and defending without it means defending "vLLM does it."
 
 **What:** split a long prompt into chunks so prefill work interleaves with decode steps instead of stalling the batch. TTFT for the newcomer trades against TPOT for the residents *by policy*, not by accident.
 
