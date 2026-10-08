@@ -32,7 +32,7 @@ Read COD as the structured second source (see the [Reading Map](01-reading-map.m
 
 **Step 4 — 🔨 Build: branchless, the memory-hierarchy sweep, and huge pages.**
 
-- **Branchless decision path.** *What:* the combined risk check rewritten as straight-line arithmetic instead of a chain of early-exit branches. *Reach for:* prior prediction of `branches` and `branch-misses` before you run it — this is the experiment most likely to disappoint if you skip the prediction. *Learn:* when removing branches *loses* — build one benchmark with a forced, perfectly-predictable branch where predication is slower, and write the paragraph explaining why. That paragraph is the interview answer.
+- **Branchless decision path.** *What:* the combined admission check rewritten as straight-line arithmetic instead of a chain of early-exit branches. *Reach for:* prior prediction of `branches` and `branch-misses` before you run it — this is the experiment most likely to disappoint if you skip the prediction. *Learn:* when removing branches *loses* — build one benchmark with a forced, perfectly-predictable branch where predication is slower, and write the paragraph explaining why. That paragraph is the interview answer.
 - **The memory-hierarchy sweep.** *What:* sweep the working set from L1-resident up past RAM into swap, recording per-access time (or achieved bandwidth) against footprint. *Why:* the resulting curve — L1 → L2 → L3 → RAM → the swap cliff — is the single best figure this project produces, and it's the same experiment as the TLB sweep with a longer x-axis. *Reach for:* `vmstat 1` in a second terminal for the swap regime (`si`/`so`/`free`/`swpd`); the OSTEP ch. 21 `mem` homework is this experiment already written — `mem.c` is in your `ostep-homework` checkout and it prints bandwidth per loop, so the harness is mostly "sweep the size, collect, plot." *Learn:* the hierarchy as *your machine's* numbers rather than a textbook table — and that loop 0 pays first-touch faults while loops 1+ are warm, until past RAM, where loop 1 re-faults everything loop 0 evicted. **Predict both shapes before running** ([`03-explain-loop.md`](03-explain-loop.md)).
   - **Boundary, honestly:** a beyond-RAM run thrashes the NVMe for minutes and can trip the OOM killer (`overcommit_memory=0` means the allocation *succeeds* and the process dies later — a good war story, a bad surprise). Run it from a TTY, capped; or measure the curve to RAM and label the swap regime *"read from OSTEP ch. 21, not measured."* Either is defensible. An unlabelled one is not.
 - **Huge pages and TLB characterization.** *What:* apply huge pages to the hot data once the sweep above has told you where TLB pressure actually bites. *Reach for:* `madvise`, `smaps` (`AnonHugePages`) for verification, `dTLB-load-misses` for the mechanism, and the three THP modes as your controlled variable. *Learn:* why a page walk is mostly misses — the upper levels are tiny and shared across every translation, so they stay cached; leaf entries are scattered across the whole address space, so they don't. Huge pages attack both halves of that: fewer levels to walk, and each leaf entry covering more of the footprint. The elbows in the sweep curve are *your* machine's L1/L2 dTLB reach, not trivia.
@@ -41,10 +41,10 @@ Read COD as the structured second source (see the [Reading Map](01-reading-map.m
 
 **✅ Verify:** Can you explain why an always-taken branch beats predication? Why huge pages can hurt small/sparse working sets? Where the swap cliff sits on your curve — and why loop 1 costs more than loop 0 past it? Why remote atomics cost ~5× local — and why your 9800X3D can't demonstrate it (single CCD) but a 2-socket machine can?
 
-**Skip:** prefetching (noise), AVX2 (stretch only), per-node kill-switch replication (understand it, cite it, don't build it).
+**Skip:** prefetching (noise), AVX2 (stretch only), per-node breaker replication (understand it, cite it, don't build it).
 
 **Artifact:** bench report — topology deltas, false-sharing before/after, branch-miss delta, memory-hierarchy sweep (L1 → swap cliff) + TLB curve, cross-node penalty (cloud-measured, provenance annotated), all perf-verified, all with predictions logged.
-**Claims this phase should earn:** *"NUMA-aware risk path: [X]× p99 degradation on cross-node atomics (measured on 2-socket bare metal); cacheline-aligned ledger (false-sharing p99 improved [Y]×); branchless checks ([Z]% fewer branch misses, perf-verified, with documented case where branchless loses)."*
+**Claims this phase should earn:** *"NUMA-aware admission path: [X]× p99 degradation on cross-node atomics (measured on 2-socket bare metal); cacheline-aligned ledger (false-sharing p99 improved [Y]×); branchless checks ([Z]% fewer branch misses, perf-verified, with documented case where branchless loses)."*
 
 ---
 
@@ -57,4 +57,4 @@ Read COD as the structured second source (see the [Reading Map](01-reading-map.m
 - Event loop vs spinning receiver; what io_uring solved (post-dates OSTEP ch. 33).
 - MESI at the protocol level (false-sharing mechanism; remote atomic ~5× local). Dense array vs hash: footprint vs pointer chasing, cache-level crossover. SIMD: gather/scatter, AVX2 vs AVX-512 downclocking, lane semantics.
 
-**Next:** [`13-phase-3-feed.md`](13-phase-3-feed.md).
+**Next:** [`13-phase-3-loadgen.md`](13-phase-3-loadgen.md).

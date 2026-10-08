@@ -7,7 +7,7 @@
 
 Match the Orderbook/Backtester entries: verb-led, mechanism stated, measured number attached. One idea per bullet — the constraint that binds is total page lines, not bullets per project; correctness second (the differentiator — almost no candidate claims fuzzed invariants + deterministic replay); ablation numbers are probe-bait for "how did you measure that?" questions; "loopback" keeps the feed claim honest.
 
-**The risk-engine bullets live in Appendix A below** — that is their single home, so the wording can't drift between a draft block and the shipped page. Appendix B re-spines the same facts for AI-infra roles. The per-phase resume lines in the phase docs are the *raw material* those bullets are cut from.
+**The inference-engine bullets live in Appendix B below** — that is their single home, so the wording can't drift between a draft block and the shipped page. Appendix A re-spines the same facts for quant roles: Orderbook, Backtester, and the engine framed as low-latency systems evidence. The per-phase resume lines in the phase docs are the *raw material* those bullets are cut from.
 
 **Space-constrained fallback:** cut whole lines, never merge two claims into one bullet. Stacking ideas into a line is what makes a project block unreadable, and it saves less space than dropping a weak line does.
 
@@ -46,11 +46,11 @@ Run against the repos on this machine by grepping the code each claim names. **S
 | PMR-pooled intrusive FIFO per level | **target** | zero `pmr`/`intrusive`/pool hits |
 | OFI / microprice / queue-position feature layer | **target** | zero `microprice`/`imbalance`/`queuePosition` hits |
 
-### Risk engine
+### Inference engine (v4 pivot, adopted 2026-10-09)
 
 | Claim | Status | Evidence |
 | --- | --- | --- |
-| All six bullets | **target** | the repo holds `TODO.md` and `docs/` only — there is no `src/` |
+| All engine bullets — gateway, scheduler, decoder, kernels | **target** | the repo holds `TODO.md` and `docs/` only — there is no `src/`. The pre-trade risk-engine claims audited here previously are superseded wholesale; the pre-pivot spec is in git history before the v4 commit |
 
 ### GoodSoft work bullet 1
 
@@ -85,14 +85,14 @@ B.Sc. (Honours), Economics, Minor in Computer Science & Mathematics — Universi
 
 **Projects**
 
-*Three systems, one standard: a matching engine, a statistical simulation engine, and a real-time risk layer — nanosecond latency measured with controls, determinism verified bit-for-bit.*
+*Three systems, one standard: a matching engine, a statistical simulation engine, and a low-latency serving engine — nanosecond-scale latency measured with controls, determinism verified bit-for-bit.*
 
 **Order Book Matching Engine — C++17** (github.com/jason-deng-dev/Orderbook)
 
 - Array-indexed price ladder with PMR-pooled intrusive FIFO queues per level (price-time priority): O(1) best-quote access and insert/cancel-by-ID; zero hot-path allocations.
 - Replaced std::map prototype with the flat ladder (3.9× throughput, 1.18M → 4.55M msgs/sec) and the order index with a generational slot map (cancel p50 [125→N]ns) — fills bit-identical across rewrites on the 1M-message replay.
 - Benchmarked 12 op paths (Google Benchmark): p50 add 142ns, cancel 125ns, 3-level sweep 357ns; p99 within ~3% of p50.
-- Zero-alloc feature layer (order-flow imbalance, microprice, queue-position estimate) at [X] msgs/sec, feeding downstream model inference.
+- Zero-alloc feature layer (order-flow imbalance, microprice, queue-position estimate) at [X] msgs/sec, feeding the backtester's signal inputs.
 
 **Backtesting + Monte Carlo Engine — C++17** (github.com/jason-deng-dev/Backtester)
 
@@ -102,18 +102,17 @@ B.Sc. (Honours), Economics, Minor in Computer Science & Mathematics — Universi
 - Parallelized across [C] cores by index-partitioned writes with per-run seeding: serial and parallel samplers agree bit-for-bit under test, [S]× speedup on [C] cores.
 - Model pipeline: leakage-free point-in-time datasets → PyTorch training → ONNX export → walk-forward evaluation with null-ensemble validation.
 
-**Real-Time Pre-Trade Risk Engine — C++17** (repo)
+**Low-Latency Inference Engine — C++17** (repo) — *framed for this page as systems evidence; the serving-layer bullets live in Appendix B*
 
-- Pre-trade risk layer between strategy and matching engine: sub-200ns O(1) checks, [A]× under a mutex + unordered_map baseline measured on the same harness.
-- SEC 15c3-5-style control set: position/notional limits, price bands, rate limits, self-trade prevention, restart-safe kill switch.
+- Sub-microsecond O(1) admission control on the request path (token-bucket rate limits, per-tenant concurrency caps, circuit breaker, restart-safe kill switch): [A]× under a mutex + unordered_map baseline measured on the same harness.
 - Cacheline-aligned, NUMA-pinned hot path: zero hot-path allocations under malloc interposition, cross-node atomics [D]× a local atomic.
 - Ablation on that layout: false-sharing elimination cut p99 [B]×, branchless checks cut branch misses [C]%.
-- Verification: [10M] fuzzed sequences differential-tested against a reference implementation with zero divergences; TSan-clean lock-free SPSC ledger with decisions bit-identical across runs and thread counts.
-- Driven end-to-end from a loopback UDP multicast feed with gap detection and snapshot recovery; ONNX inference on the hot path with replay-pinned model versions.
+- Verification: [10M] fuzzed request sequences differential-tested against a reference implementation with zero divergences; TSan-clean lock-free SPSC ledger with decisions bit-identical across runs and thread counts.
+- Driven end-to-end from an open-loop load generator over a loopback TCP request stream; per-stage latency measured coordinated-omission-correct.
 
-**Editing rules:** cut adjectives, tool-drops, redundant tails — never numbers, never "bit-identical", never method names. Cut order under pressure: ingestion bullet → risk bullet 4 (ablation) → backtester parallel bullet. One page, always.
+**Editing rules:** cut adjectives, tool-drops, redundant tails — never numbers, never "bit-identical", never method names. Cut order under pressure: engine bullet 5 (load generator) → engine bullet 3 (ablation) → backtester parallel bullet. One page, always.
 
-**Bracket fallbacks (current, per rule 1 — an unfilled `[X]` ships as the shorter line):** risk bullet 1 drops the `[A]× … same harness` parenthetical, keeping "sub-200ns O(1) checks". Risk bullet 3 drops the cross-node clause if `[D]` is unfilled, keeping the layout and interposition clauses. Risk bullet 4 drops the two ablation factors and the line goes with them. Risk bullet 5 drops the fuzz/differential clause if `[10M]` is unfilled, keeping the TSan/bit-identical clauses. Orderbook bullet 3 drops the `[125 → N]ns` parenthetical. Orderbook bullet 4 drops entirely if `[X]` is unfilled. Backtester bullet 3 (GPU) does not ship at all until step A exists in the repo: as of 2026-09-29 `grep -rniE "cuda|hip/|__global__|nvcc|rocm"` over `include src tests CMakeLists.txt` returns zero hits, so there is no fallback for that bullet, only deletion. Backtester bullet 4 drops entirely if `[S]×` and `[C]` are unfilled.
+**Bracket fallbacks (current, per rule 1 — an unfilled `[X]` ships as the shorter line):** engine bullet 1 drops the `[A]× … same harness` parenthetical, keeping "sub-microsecond O(1) admission control". Engine bullet 2 drops the cross-node clause if `[D]` is unfilled, keeping the layout and interposition clauses. Engine bullet 3 drops the two ablation factors and the line goes with them. Engine bullet 4 drops the fuzz/differential clause if `[10M]` is unfilled, keeping the TSan/bit-identical clauses. Engine bullet 5 drops entirely until the load generator exists. Orderbook bullet 3 drops the `[125 → N]ns` parenthetical. Orderbook bullet 4 drops entirely if `[X]` is unfilled. Backtester bullet 3 (GPU) does not ship at all until step A exists in the repo: as of 2026-09-29 `grep -rniE "cuda|hip/|__global__|nvcc|rocm"` over `include src tests CMakeLists.txt` returns zero hits, so there is no fallback for that bullet, only deletion. Backtester bullet 4 drops entirely if `[S]×` and `[C]` are unfilled.
 
 ---
 
@@ -137,41 +136,40 @@ Skills: C++17/20 · CUDA · Python/PyTorch · ONNX Runtime · Linux (perf, NUMA,
 - Sole engineer on a 6-service production platform (AWS, Docker, PostgreSQL, CI/CD): automated content and catalog operations end-to-end — eliminated routine manual ops and gave non-technical operators self-serve control without SSH; hardened public APIs with Redis rate limiting and a proxy layer.
 - Built and operated a Claude-API content pipeline in production — prompt strategy and content weights tuned from historical performance data across 4 content types.
 
-**Projects** (reordered: most AI-dense first)
+**Projects** (reordered: the engine leads — it is the flagship)
+
+**Inference Engine — C++17/CUDA** (repo)
+
+- End-to-end low-latency serving stack built as one system: from-scratch transformer decoder, continuous-batching scheduler, admission-control gateway, and a measured CUDA kernel study — single CMake build, every claim regenerable from `bench/`.
+- Decoder: from-scratch GPT-2-class transformer (multi-head attention, KV cache behind a swappable allocator, greedy decode); output verified token-for-token against llama.cpp on fixed prompts; [X] tok/s single-stream, [N] ms TTFT at 2k context; decode at [B]% of peak DRAM bandwidth, roofline-analyzed against the kernel ladder's measured ceiling.
+- Scheduler: iteration-level continuous batching with KV-budget admission (reject-at-capacity); outputs token-identical to the single-stream reference across batch compositions and thread counts; [N]× throughput at [B]× TPOT, explained by achieved decode bandwidth; TTFT/TPOT under concurrent load, coordinated-omission-correct.
+- Gateway: sub-microsecond O(1) admission control (token-bucket rate limits, per-tenant concurrency caps, circuit breaker, restart-safe kill switch) over SPSC dispatch; cacheline-aligned, NUMA-pinned, zero hot-path allocations (LD_PRELOAD-verified); [A]× over a mutex baseline; perf c2c-verified false-sharing elimination cut p99 [B]×.
+- Kernels: GEMM ladder naive→coalesced→shared-memory-tiled→register-blocked at [A]% of peak FP32 FLOPs and [B]% of peak DRAM bandwidth; occupancy sweep; one INT8 kernel with measured throughput gain and accuracy cost.
+- Correctness: [10M]+ fuzzed request sequences differential-tested against a naive reference scheduler with zero divergences; deterministic replay bit-identical across thread counts (FP non-associativity analyzed, not assumed); TSan-clean.
 
 **Backtesting + Monte Carlo Engine — C++17** (github.com/jason-deng-dev/Backtester)
 
 - GPU-accelerated Monte Carlo (CUDA): [N]× path throughput vs. CPU, bit-identical seeded replay across CPU/GPU, Nsight-profiled on cloud T4.
 - End-to-end ML pipeline: leakage-free point-in-time datasets → PyTorch training → ONNX export → walk-forward evaluation with null-ensemble validation.
-- Parallelized the simulation with lock-free SPSC queues: per-path seeding, bit-identical hashes across 1–[C] threads, [S]× speedup on [C] cores.
+- Parallelized across [C] cores by index-partitioned writes with per-run seeding: serial and parallel samplers agree bit-for-bit under test, [S]× speedup on [C] cores.
 - C++17 simulation engine: zero-alloc CSV ingest, pluggable strategy components, lot-level accounting with per-position statistics.
-
-**Real-Time Inference Gateway — C++17** (repo)
-
-- Low-latency inference serving on a hot path: ONNX Runtime in C++ under live UDP feed load; model versions pinned in replay — decisions bit-identical across runs and thread counts; batch-size vs. p99 sweep quantified.
-- Fuzzed [10M] sequences with zero invariant violations; TSan-clean lock-free SPSC ledger; zero hot-path allocations verified via new/delete interposition.
-- Micro-architecture ablation study (perf-verified): [X]× p99 degradation on cross-node atomics, [Y]× from false-sharing elimination, [Z]% fewer branch misses via branchless checks.
-- O(1) pre-trade guardrails (position/notional limits, kill switch) on a NUMA-pinned, cacheline-aligned path.
 
 **Order Book Matching Engine — C++17** (github.com/jason-deng-dev/Orderbook)
 
 - Array-indexed price ladder with PMR-pooled intrusive FIFO queues: O(1) best-quote access and insert/cancel-by-ID; zero hot-path allocations.
 - Replaced std::map with the flat ladder (3.9× throughput, 1.18M → 4.55M msgs/sec) and the order index with a generational slot map (cancel p50 [125→N]ns) — fills bit-identical across rewrites on the 1M-message replay.
 - Benchmarked 12 op paths: p50 add 142ns, cancel 125ns, 3-level sweep 357ns; p99 within ~3% of p50.
-- Zero-alloc feature-computation layer (order-flow imbalance, microprice, queue position) at [X] msgs/sec — feeds the inference pipeline.
+- Zero-alloc feature-computation layer (order-flow imbalance, microprice, queue position) at [X] msgs/sec — feeds the backtester's signal inputs.
 
-**Editing rules:** the skills strip is the FIRST cut under space pressure (bullets carry the keywords). Never submit as "ML engineer" — boundary discipline applies to applications too.
+**Editing rules:** the skills strip is the FIRST cut under space pressure (bullets carry the keywords). Never submit as "ML engineer" — boundary discipline applies to applications too. Engine-block cut order: correctness line → kernels line → gateway ablation clause. The decoder and scheduler bullets are the block's reason to exist; they go last.
+
+**Engine bracket fallbacks:** every engine bullet is a target until the code exists. An engine bullet with an unfilled bracket ships as its shorter form or not at all — and the block's lead-in line ships only when the first two subsystems (kernels and decoder) are measurable.
 
 **Underused asset (added 2026-09-28): the GoodSoft bullets are framed as automation work, and for AI-infra and platform roles they should be framed as distributed-systems operations work** — six services, the interfaces and failure modes between them, rate limiting and a proxy layer as defence in depth, and incident ownership as the retained consultant. It is the only entry on the page that proves you have operated something in production and been accountable for it when it broke, which is the thing most junior candidates cannot claim. It currently reads as a side note. One rewriting pass at application time: same facts, distributed-systems vocabulary, no invented specifics.
 
-### Addendum — the CUDA kernels and decoder artifacts (added 2026-09-28)
+### Addendum — artifact placement (resolved by v4, 2026-10-09)
 
-Step A now produces two artifacts instead of one (the Backtester's GPU Monte Carlo, plus a kernels bench: GEMM ladder, occupancy sweep, roofline figure, one quantized kernel), and the new step G produces a third (the C++17 decoder). None of the three has a home on this page yet, and an artifact with no single home is exactly what the drift rule at the top of this doc exists to prevent.
+The v3 question — where the kernels bench and the decoder live once they exist — is answered by the pivot: they are subsystems of the **Inference Engine** project block, not separate blocks and not fold-into-Backtester clauses. The Backtester keeps its own block (GPU Monte Carlo + ML pipeline); the kernels ladder's numbers, the decoder's tok/s and TTFT, and the scheduler's batching tables are all engine bullets.
 
-Placement, decided now so the wording cannot drift later:
-
-- **Kernels bench** does not get its own project block. Appendix B already runs four projects on one page. Fold it into the existing Backtester project block by extending the GPU bullet: one clause for the ladder and the roofline percentage, one clause for the quantized kernel's accuracy delta. Two numbers, one bullet, no new heading.
-- **Decoder** gets a single bullet. Which block it joins depends on what the final word count allows: it can sit under the Backtester as a "same pipeline, one step further" line, or it can become a fifth project block titled something like *Transformer Inference — C++17* if the page has room after the brackets fill. Do not create the fifth block pre-emptively.
 - **Skills strip:** "Nsight" and a kernel-optimization phrase may be added once A ships, and "KV cache / attention" once G ships. Not before. The strip stays the first cut under pressure.
-
-Bracket discipline applies to all three: the ladder's bandwidth and FLOPs percentages, the quantized kernel's accuracy delta, and the decoder's tok/s and TTFT all ship as fallbacks until measured. A kernels repo with no roofline number is worse than omitting the bullet, because "roofline-analyzed" with nothing behind it is the easiest claim in this project to cross-examine.
+- **Bracket discipline** applies to every engine bullet: the ladder's bandwidth and FLOPs percentages, the quantized kernel's accuracy delta, the decoder's tok/s and TTFT, the scheduler's throughput multiple, and every gateway ablation factor all ship as fallbacks until measured. A blocked module with no measured number is worse than omitting the bullet, because "roofline-analyzed" or "continuous batching" with nothing behind it is the easiest claim in this project to cross-examine.

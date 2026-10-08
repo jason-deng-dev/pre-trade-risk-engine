@@ -91,7 +91,7 @@ Flags you actually need:
 | `-r N` | Repeat the whole command N times | Noise control; report median and spread |
 | `-o FILE` | Save output | Mandatory for every resume-linked number |
 | `-x,` | CSV-style output | Easier to parse into the ablation table |
-| `-p PID` | Attach to a running process | Measure the integrated feed/risk pipeline under load |
+| `-p PID` | Attach to a running process | Measure the integrated serving pipeline under load |
 | `-t TID` | Attach to one thread | Measure a specific pinned thread |
 | `-a` | System-wide measurement | Rare for this project; needs care and permissions |
 | `-C CPU` | Restrict CPU set, normally with `-a` | Topology/system experiments, not ordinary benchmark runs |
@@ -102,7 +102,7 @@ Flags you actually need:
 Attach to a live pipeline for ten seconds:
 
 ```bash
-perf stat -p <risk-engine-pid> -- sleep 10
+perf stat -p <engine-pid> -- sleep 10
 ```
 
 Discover what your CPU exposes:
@@ -168,10 +168,10 @@ Learn it in layers. Do not start with raw CPU-specific PMU events.
 
 **Layer 3 — apply it to this project.**
 - False-sharing toy: same logical work, different cache-line placement.
-- Branchless risk check: same decisions, different control flow.
+- Branchless admission check: same decisions, different control flow.
 - Huge pages: same traversal, different TLB pressure.
 - SMT placement: same code, different topology.
-- Integrated feed: attach to the live process and compare load levels.
+- Integrated pipeline: attach to the live process and compare load levels.
 
 **Layer 4 — advanced awareness, not a Phase 0 requirement.**
 - CPU-specific raw PMU events from `perf list` and vendor manuals.
@@ -189,7 +189,7 @@ Learn it in layers. Do not start with raw CPU-specific PMU events.
 | Huge pages | Does reducing TLB pressure improve traversal? | `cycles:u`, `instructions:u`, `dTLB-loads:u`, `dTLB-load-misses:u`, `page-faults` | Lower dTLB miss rate and lower cycles/order on a TLB-bound working set; verify `AnonHugePages` in `smaps` |
 | SMT sibling vs. physical core | Do sibling threads contend for core resources? | `cycles:u`, `instructions:u`, `task-clock`, `context-switches`, `cpu-migrations` | Same instructions, worse cycles/latency on siblings; topology logged |
 | NUMA local vs. remote | What is the cross-node penalty? | Cycles/latency from the harness plus CPU-specific local/remote memory events if exposed; `numastat` for placement | Reproducible same-node vs. cross-node delta on bare metal, with provenance; generic cache counters alone do not prove remote traffic |
-| Integrated feed under load | Does risk-check behavior change while the feed thread is active? | Default events plus branches/cache/TLB set, attached with `-p` | Compare equal message rates and pinned topologies; separate pipeline latency from aggregate CPU events |
+| Integrated pipeline under load | Does admission behavior change while the serving threads are active? | Default events plus branches/cache/TLB set, attached with `-p` | Compare equal message rates and pinned topologies; separate pipeline latency from aggregate CPU events |
 | Zero-allocation verification | Are hot paths allocation-free? | Interposition counters are the proof; `page-faults` and `context-switches` are supporting signals | Zero intercepted allocations after warmup; do not claim zero-alloc from `perf stat` alone |
 | Final ablation | What did each optimization contribute? | One fixed event set across all configurations | Same workload for every row; primary latency/cycle metric plus explanatory counters |
 

@@ -69,11 +69,11 @@ Weighting: ~70% coding/systems, ~20% design + math, ~10% behavioral/domain. Cove
 
 - Stack vocabulary: L2/L3/L4 roles (frames/MAC, IP/routing, TCP/UDP)
 - **TCP:** segments, handshake/teardown states, seq/ack, retransmission (RTT/RTO), flow control (rwnd), congestion control (slow start, AIMD, CUBIC/BBR), **head-of-line blocking**, Nagle + delayed-ACK interaction, keepalive, SACK/timestamps
-- **UDP:** header, checksum weakness, MTU/fragmentation (why avoid), **multicast (class D, IGMP, joins, loopback)**
-- **The HFT split:** UDP market data / TCP order entry — defend it
+- **UDP:** header, checksum weakness, MTU/fragmentation (why avoid); *quant vocabulary only:* multicast (class D, IGMP, joins, loopback) — the v4 engine does not build this, so it is boundary knowledge attached to Orderbook, never a build claim
+- **The transport split, both directions (v4):** TCP for the engine's request/response path — flow control as backpressure, head-of-line blocking as a design constraint to reason about — and UDP market data / TCP order entry as quant vocabulary you can defend without having built it. Expect the question phrased either way
 - API depth: non-blocking + `EAGAIN`, partial send/recv, `MSG_*` flags, latency-relevant `SO_*` (RCVBUF/SNDBUF/REUSEADDR/REUSEPORT/BUSY_POLL/TCP_NODELAY), `shutdown` vs `close`, `SO_ERROR`
 - Kernel path: interrupt → NAPI → softirq → socket buffer → wakeup; kernel bypass & `io_uring` for networking
-- Protocols: FIX shape (tag=value, session seqnums, heartbeats, gap fill/resend), ITCH/OUCH/PITCH/SBE vocabulary, binary framing (length-prefix vs delimiters)
+- Protocols: binary framing (length-prefix vs delimiters) as built; FIX shape (tag=value, session seqnums, heartbeats, gap fill/resend) and ITCH/OUCH/PITCH/SBE as *quant vocabulary* — read-only, no build claim
 - Measurement: RTT anatomy, bandwidth-delay product, bufferbloat, **propagation ≈ 5µs/km**, serialization delay
 
 *Coverage: Top-Down structured + Phase 3 + Beej's.*
@@ -87,7 +87,7 @@ Weighting: ~70% coding/systems, ~20% design + math, ~10% behavioral/domain. Cove
 
 ### G. System design — low-level flavored (~5–10%)
 
-- Repertoire: market data handler, order gateway/OMS, matching engine, risk gateway, logger (seq writes, batching, MPSC), thread pool, memory pool/arena, rate limiter (token bucket vs. sliding window), LRU cache, pub/sub, heartbeat/failover, time sync (PTP), config distribution
+- Repertoire (v4 — serving items are the built ones): inference gateway, request scheduler with admission, load shedder, rate limiter (token bucket vs. sliding window), sequencer/logger (seq writes, batching, MPSC), thread pool, memory pool/arena, LRU cache, heartbeat/failover, config distribution; *quant vocabulary:* market data handler, order gateway/OMS, matching engine, risk gateway, pub/sub, time sync (PTP)
 - Scoring axes: correctness under concurrency, latency-budget breakdown, failure handling, observability, capacity math
 - Generic SD (AI-infra roles): Xu Vol. 1 flashcard territory
 
@@ -108,7 +108,7 @@ Weighting: ~70% coding/systems, ~20% design + math, ~10% behavioral/domain. Cove
 ### J. Market microstructure domain (~5%)
 
 - Order types (limit/market/stop/IOC/FOK/peg), price-time priority, book mechanics, spread, adverse selection basics; latency economics (tick-to-trade, jitter, colocation); exchange anatomy (gateways, feeds, matching); light regulatory vocabulary (Reg NMS, market-maker obligations)
-- **Pre-trade control set (added 2026-09-28, from the Phase 1 domain reading):** price bands/collars, max order size, order-count and message-rate limits, duplicate-order detection, per-instrument vs. aggregate limits, notional vs. quantity and gross vs. net exposure, kill-switch semantics including in-flight orders, self-trade prevention modes (cancel resting / cancel aggressing / cancel both), fail-safe vs. fail-open. Regulatory frame: **SEC Rule 15c3-5** (market access) and MiFID II RTS 6 — named as technical implementations of those control sets, never as compliance work.
+- **Serving control set (v4 — replaces the pre-trade control set, which is now vocabulary-only):** token-bucket vs. leaky-bucket vs. sliding-window vs. GCRA rate limiting; per-tenant concurrency caps vs. rate caps (what each bounds); reject-at-capacity vs. queue-and-delay; circuit-breaker states and thresholds; load shedding; retry storms and why jittered backoff exists; fail-safe vs. fail-open. Answered from your own admission path and the Phase 3 overload run. The pre-trade set (price bands, self-trade prevention, SEC 15c3-5 / RTS 6) stays available as a boundary answer attached to Orderbook, not as a build claim.
 - Their industry-context appendix covers the vocabulary layer
 
 ### K. Resume cross-examination (runs under everything)

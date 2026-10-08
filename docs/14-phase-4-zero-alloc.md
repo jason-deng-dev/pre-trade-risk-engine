@@ -21,7 +21,7 @@
   - **Boundary of the instrument (added 2026-09-28): interposing `operator new`/`delete` does not see raw `malloc`/`free`.** Any C library, and Google Benchmark itself, allocates through C functions that never touch the C++ operators — so a hidden allocation on the measured path would pass the gate while the gate reports clean. Close it rather than document it: interpose `malloc`/`free`/`realloc` as well, in the same preloaded library as the operators, and run the check as an `LD_PRELOAD` build so dynamically-linked callers are covered too (a `--wrap` at link time only catches calls resolved inside your own binary). Cross-check at least once with a heap profiler on the full run. The claim you are buying is "the process did not allocate on the hot path," and that claim is only as strong as the widest hook you installed.
 
   - **What the proof does not cover:** it shows nothing *new* was allocated — not what happened to the pages you already hold. Pair it with `page-faults` and RSS under live load, and answer this for the design doc: after warmup, why doesn't RSS shrink when the process frees memory? (Pages go back to the allocator and become page cache; the OS reclaims them only under pressure.) Twenty minutes of `vmstat 1` alongside the running engine answers it on your own machine. That's the honest boundary on the zero-alloc claim — *no allocation* is not the same as *no page traffic*, and a reviewer who knows the difference will ask.
-- **AI hook:** keep the benchmark harness able to swap the synthetic strategy for a future decision backend, and to record batch size as a first-class dimension. Do not build the backend here; preserve the extension point (steps E+F in [`20-ai-extension.md`](20-ai-extension.md)).
+- **AI hook:** keep the benchmark harness able to swap the synthetic workload for the real decoder behind the model-backend interface, and to record batch size as a first-class dimension. Do not build the backend here — the interface is defined in phase 1 and the decoder lands in step G ([`20-ai-extension.md`](20-ai-extension.md)).
 
 - **Ablation study — the centerpiece.** One table, every "what did X buy you?" answered:
 
@@ -43,6 +43,6 @@ The reference implementation is built **once**, in Phase 1, and serves two purpo
 **Never cut:** correctness (Phase 1), ablation, zero-alloc.
 
 **Artifact:** `bench/` with ablation table + histograms.
-**Claims this phase should earn:** *"Verified zero hot-path allocations via global new/delete interposition; ablation study quantifying each micro-arch optimization's p99.9 contribution; integrated with custom matching engine driven by multicast feed."*
+**Claims this phase should earn:** *"Verified zero hot-path allocations via global new/delete interposition; ablation study quantifying each micro-arch optimization's p99.9 contribution; measured on the integrated serving pipeline under open-loop load."*
 
 **Next:** [`15-phase-5-docs.md`](15-phase-5-docs.md).

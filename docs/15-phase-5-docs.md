@@ -1,25 +1,34 @@
 # Phase 5: Docs + Post-Project Reading Queue
 
 > **Canonical master:** [`00-master.md`](00-master.md). Sizing, cut order, and operating rules live there — if this doc and the master disagree, the master wins.
-> Companion docs: [`90-resumes.md`](90-resumes.md) (the bullets this phase makes true) · [`91-interview-territory.md`](91-interview-territory.md) (what the proof pack is defending against)
+> Companion docs: [`90-resumes.md`](90-resumes.md) (the bullets this phase makes true) · [`91-interview-territory.md`](91-interview-territory.md) (what the proof pack is defending against) · [`16-phase-6-scheduler.md`](16-phase-6-scheduler.md) (whose writeups land here too)
 
-**Calibrate the genre first (added 2026-09-28).** Read one or two respected public design documents before writing yours — a RocksDB or LLVM design doc, or a mature RFC. One hour. The failure mode for a first design doc is writing a README with more words: the genre answers *why this design and what it cost*, never *what the code does*.
+**Calibrate the genre first.** Read one or two respected public design documents before writing yours — a RocksDB or LLVM design doc for the systems genre, and one inference engine's architecture documentation (vLLM's design docs, TensorRT-LLM's architecture pages, or llama.cpp's internals notes) so you know how this specific system is described by the people who build them. Two hours. The failure mode for a first design doc is writing a README with more words: the genre answers *why this design and what it cost*, never *what the code does*.
 
-**Build:** README (every claim linked to `perf stat` output or Google Benchmark JSON); design doc (2–3 pages): dense-array choice + crossover reasoning, atomic flag vs. mutex, branchless — when and why not, huge pages — when they hurt, ledger consistency model, **why UDP for market data / TCP for order entry**, gap-and-snapshot rationale, plus three additions:
+**Build:** README (every claim linked to `perf stat` output, Google Benchmark JSON, or a `bench/` table); design doc (3–4 pages, it now covers four subsystems):
 
-- **The latency budget arithmetic — the denominator for "sub-200ns."** A latency claim without the budget it lives inside is a benchmark, not an argument. State what tick-to-trade costs at this scale (roughly 1–10µs, and why — feed handling, decision, gateway, serialization), state what fraction of it your risk check consumes, and state what would have to be true for that fraction to matter. This single paragraph is what turns the headline number into a design decision, and it is the first thing a sharp interviewer will ask for.
-- **The overload policy.** From the Phase 3 overload run: which stage saturates first, whether the kernel or the application drops, whether the ring's producer blocks or the oldest entry is sacrificed, and what the kill switch does under sustained pressure. A system's failure mode is part of its specification.
-- **Final-versus-reference delta.** The headline comparison against the straightforward implementation (mutex, `std::unordered_map`, allocating), with the optimization ladder from Phase 4 underneath it as the evidence. Reviewer question answered: why yours instead of the obvious thing. The README, design doc, raw benchmark outputs, fuzz/TSan evidence, and replay hashes together form the **core proof pack** referenced by the career timeline in [`92-algorithms-and-career.md`](92-algorithms-and-career.md).
+- **The two latency budgets — the denominator for every TTFT/TPOT claim.** A latency claim without the budget it lives inside is a benchmark, not an argument. State what TTFT and TPOT each cost at this scale and why (admission, queueing, prefill compute, decode bandwidth), state the SLO you set for each under a stated offered rate, and state what would have to be true for your numbers to matter. This single section is what turns headline numbers into design decisions, and it is the first thing a sharp interviewer will ask for.
+- **The overload policy.** From the Phase 3 overload run: which stage saturates first, whether the transport's flow control or your shedding policy absorbs the excess, what the breaker does and at what threshold, and what happens to in-flight requests when it trips. A system's failure mode is part of its specification.
+- **The admission policy.** Reject-at-capacity vs. queue-and-delay, why fail-fast, and the Little's Law arithmetic behind the choice. One paragraph, defensible on a whiteboard.
+- **Final-versus-reference delta.** The headline comparison against the straightforward implementation (mutex, `std::unordered_map`, allocating), with the optimization ladder from Phase 4 underneath it as the evidence. Reviewer question answered: why yours instead of the obvious thing.
+- **The scheduler section — stub it here, fill it in phase 6** (phase 5 runs first in the v4 sequence; leave the heading and the questions in place so phase 6 appends rather than improvises): the rung ladder and its measured deltas, the KV-budget arithmetic on your machine, the admission projection, the chunked-prefill decision, scheduler overhead per admission, and the **FP non-associativity / output-equality** writeup — why batched kernels can differ in the last bits, what your gate therefore proves, and where the guarantee stops.
+- **The decoder correctness story.** Single-stream token-for-token against llama.cpp first, concurrency second; why the KV allocator sits behind an interface and what that buys.
+- **The kernel ladder.** Rung-by-rung numbers against the roofline, the occupancy sweep, and the quantized kernel's measured throughput gain and accuracy cost.
+- The README, design doc, raw benchmark outputs, fuzz/TSan evidence, replay hashes, and batching tables together form the **core proof pack** referenced by the career timeline in [`92-algorithms-and-career.md`](92-algorithms-and-career.md).
 
 **Design doc appendix — "Industry context" Q&A** (the home for the keywords that must NOT go on the resume, each answered from your own measured system):
 
-- **FIX vs. ITCH/OUCH**: FIX = session-based order entry over TCP (heartbeats, sequence recovery); ITCH = sequenced market data — the gap-and-snapshot model you implemented; OUCH = exchange-native low-latency order entry. One paragraph each, from your system's perspective.
-- **Kernel bypass / DPDK / RDMA**: the mechanism is your Phase 2 measurement (syscall + copy overhead); DPDK = userspace poll-mode drivers, RDMA = zero-copy remote memory. Frame: "I know the measured cost these eliminate; I didn't demo them because the point is the physics, and the physics I have."
-- **FPGA**: why the last microseconds go to hardware — deterministic latency, no OoO/branch surprises. Know the boundary; don't claim the skill.
-- **Colocation**: propagation delay ≈ 5µs/km of fiber — do this math on a whiteboard; it's the entire colocation conversation (why strategy location is infrastructure, not code).
+- **vLLM / PagedAttention, Orca, TensorRT-LLM, SGLang**: what each contributes (paging, iteration-level scheduling, kernel fusion and graph capture, prefix caching), and how your scheduler's choices map onto theirs and where they differ — answered from your rung ladder, not from the papers.
+- **Continuous vs. static batching**: the head-of-line argument, from your own rung 0 vs. rung 1 numbers.
+- **Quantization (INT8/FP8/GPTQ/AWQ)**: what each buys and costs; your INT8 kernel's measured accuracy delta is the anchor, and the precision ladder (COD 3.5) is the mechanism.
+- **KV cache management**: paging, eviction, prefix caching, and the memory math that caps batch size — from your own budget arithmetic.
+- **Speculative decoding**: know the vocabulary and the tradeoff (draft model cost vs. tokens accepted); don't claim a build.
+- **Distributed inference (tensor/pipeline parallelism, NCCL)**: boundary answer — single-node, deliberately; state why the boundary is honest for this project.
+- **Serving stacks you did not build (HTTP/2, gRPC, Triton, Ray Serve)**: one paragraph each on what problem they solve, framed against your simple binary protocol.
+- **Kernel bypass / DPDK / RDMA**: the mechanism is your Phase 2 measurement (syscall + copy overhead); frame: "I know the measured cost these eliminate; I didn't demo them because the point is the physics, and the physics I have."
 
 **📖 Post-project queue — only after shipping, sized for interview prep:**
 
 - **DDIA Ch. 1–2, 5–6 skim** (consistency models, replication) — for distributed-flavored system design rounds.
-- **Alex Xu Vol. 1 as Q&A flashcards** (caching, rate limiting, load balancing chapters). **Vol. 2: skip.**
+- **Alex Xu Vol. 1 as Q&A flashcards** (caching, rate limiting, load balancing, and the "design a rate limiter" chapter especially). **Vol. 2: skip.**
 - **OSTEP persistence skim (ch. 36, 39, 42 only — ~2 hours)** — I/O-device model, file API, journaling vocabulary. The rest of the persistence half is cut, not deferred.
