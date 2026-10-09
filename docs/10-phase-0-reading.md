@@ -36,8 +36,22 @@ The shape: one linear sequence below — OSTEP spine with per-chapter verdicts, 
 25. **OSTEP 32 & 33 — read fully.** 
 26. **OSTEP 31 — skim** Semaphores. Read for the concept (producer/consumer, readers/writers) only. C++20 now has std::counting_semaphore, but you will still see the POSIX API in legacy OS-level IPC (shared memory).
 27. **Stokes, *Inside the Machine*** — optional but recommended (~3–4 evenings; before Drepper): concept chapters fully, skim the Pentium 4/PowerPC case studies, never quote its (2006) implementation details
-28. **Drepper §1–3** — read fully (~60 pp; Foundation #1 first half — Phase 2's experiments land on this)
-29. **COD structured read, part 1 — alongside Drepper §1–3** (read *after* each matching Drepper section; second sources reinforce, they don't build): Ch. 1 (performance/Amdahl); 5.1–5.4 (rigorous caches); 5.10 (MESI — the protocol behind false sharing and atomic costs). Rest of the COD skip-list lives in [`01-reading-map.md`](01-reading-map.md); Phase 2 and Phase 4 slots below; GPU chapters went to the AI extension spine (step A)
+28. **Drepper §1–3** — read fully (~60 pp; Foundation #1 first half — Phase 2's experiments land on this). Disposition of the rest, so nothing is silently dropped: **§4–6 are read in Phase 2** (paired below); **§7 *Memory Performance Tools* is superseded by the [`perf stat` Playbook](30-perf-playbook.md)** — skim it only if it names a tool you don't recognize; **§8 *Future Technologies* is skipped** — it is 2007 predictions, and you will measure your own machine instead
+29. **COD structured read, part 1 — alongside Drepper §1–3.** The pairing, so "matching" is not a guess — read each COD section *after* the Drepper section it backs (second sources reinforce a model; they don't build it):
+
+    | Drepper (read fully, item 28) | COD part 1 | Connection |
+    | --- | --- | --- |
+    | §1 Introduction — the CPU/memory performance gap, the paper's scope (commodity x86/x86-64), and its standing caveat that vendor documentation is optimistic and measurement is the arbiter | — no counterpart — | Framing. Sets the model the next two sections build; the caveat is the reason every claim in this plan is measured rather than cited |
+    | §2 Commodity Hardware Today — RAM types, DRAM access details | 5.2 Memory Technologies (skim) | SRAM/DRAM characteristics at textbook altitude; Drepper is the deeper source, COD gives the vocabulary |
+    | §3 CPU Caches — structure, associativity, measurement; **§3.5 cache coherency + false sharing** | 5.1 Introduction, 5.3 The Basics of Caches, 5.4 Measuring and Improving Cache Performance, **5.10 Cache Coherence** | Same material, rigorous second pass. §3.5 ↔ 5.10 is the direct pair: MESI is the protocol behind Drepper's false-sharing measurement, and Phase 2's experiments measure it |
+    | — no counterpart — | 1.6 Performance, 1.7 The Power Wall, 1.8 The Sea Change | Framing only (CPU-time math, Amdahl, why multicore exists). Read these *first*, before the paired sections; they are not reinforcement of anything |
+
+    Section numbers follow the 5th / RISC-V / MIPS editions; in the 4th, cache coherence is 5.8 — match by *title*. Ch. 1 detail (skim 1.2 and 1.10; skip 1.3–1.5, 1.9, 1.11–1.12) is in the table above. Ch. 5 detail:
+
+    - **Read** 5.1 *Introduction*, 5.3 *The Basics of Caches*, 5.4 *Measuring and Improving Cache Performance*, 5.10 *Cache Coherence*. 5.3 + 5.4 are the mechanics behind Phase 2's experiments (placement, write policy, the 3Cs, replacement, multilevel caches); 5.10 is MESI.
+    - **Skim** 5.2 (Memory Technologies). **Optional:** 5.8 *A Common Framework for Memory Hierarchies* — 4 pp unifying cache and VM under the same four questions.
+    - **Skip** 5.5 (dependable memory), 5.6 (virtual machines), 5.7 (virtual memory — OSTEP owns it and you have read it), 5.9 (FSM cache control), 5.11–5.12 (RAID, cache controllers).
+    - Scheduled elsewhere, not dropped: COD 2.12 *Translating and Starting a Program* in Phase 4; the pipeline sections 4.6–4.11 in Phase 2; COD 3.5 *Floating Point* and the GPU chapters (6.6, 6.7, App. C) in step A. Full skip-map in [`01-reading-map.md`](01-reading-map.md).
 30. **Tools** (~2 hr): work through the [`perf stat` Playbook](30-perf-playbook.md) (Sections 1–3 first, then the learning layers), `man perf-stat`, and the Google Benchmark README → then the Phase 0 builds below (harness + false-sharing toy, if not already done)
 
 **Recorded for completeness — do not schedule:** OSTEP 24–25 (dialogues) · 26–30 (covered by CiA in C++ form) · 34 (dialogue) · persistence 36–51 (optional 2-hr skim of 36/39/42; rest cut) · security 52–57 (skipped entirely).

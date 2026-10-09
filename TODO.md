@@ -1,10 +1,14 @@
-- [x] OSTEP Virtualization 
-- [x] CiA c1-4 
-- [x] OSTEP 28
-- [x] Preshing's 4 memory-ordering posts
-- [ ] McKenney Memory Barrieor c1-4
-- [ ] CiA c5
-- [ ] SPSC Ring
-- [ ] CiA C6->11b
-- [ ] OSTEP 33, 29.1, 31
-- [ ] Inside the Machine (Stokes)
+- [ ] Phase 0
+  - [x] OSTEP Virtualization 
+  - [x] CiA c1-4 
+  - [x] OSTEP 28
+  - [x] Preshing's 4 memory-ordering posts
+  - [x] McKenney Memory Barrieor c1-4
+  - [ ] CiA c5
+  - [ ] SPSC Ring
+  - [ ] CiA C6->11b
+  - [ ] OSTEP 33, 29.1, 31
+  - [ ] Inside the Machine (Stokes)
+  - [ ] Dreppler §1-3
+  - [ ] COD
+  - [ ] perf stat 
