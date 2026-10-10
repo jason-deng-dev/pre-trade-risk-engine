@@ -28,7 +28,9 @@
 | [`16-phase-6-scheduler.md`](16-phase-6-scheduler.md) | **Phase 6.** Continuous batching, KV-budget admission, chunked prefill, the batching benchmark tables |
 | [`20-ai-extension.md`](20-ai-extension.md) | AI/ML curriculum: steps H→B→C→D (Orderbook/Backtester) plus A and G, which now build inside this repo |
 | [`30-perf-playbook.md`](30-perf-playbook.md) | `perf stat` from zero to claim discipline — referenced by Phases 0, 2, and 4 |
+| [`31-verification-and-observability.md`](31-verification-and-observability.md) | The sanitizer CI matrix (all three repos) and the observation-cost rule — referenced by Phases 1, 4, and 5 |
 | [`40-deepening-queue.md`](40-deepening-queue.md) | Cross-project additions to the Orderbook and Backtester, gated on core progress |
+| [`41-network-ingestion.md`](41-network-ingestion.md) | **Orderbook.** The AF_XDP ingestion ladder, wire timestamps, and the real ITCH message mix — the largest anchor workstream |
 | [`90-resumes.md`](90-resumes.md) | House style, distilled bullets, keyword discipline, Appendix A (quant) and B (AI-infra) |
 | [`91-interview-territory.md`](91-interview-territory.md) | The full interview map (Appendix E) — the master checklist for interview season |
 | [`92-algorithms-and-career.md`](92-algorithms-and-career.md) | Algorithms track (Appendix C) and career strategy (Appendix D) |
@@ -57,7 +59,7 @@ The curriculum has two spines:
 | Spine | Purpose | Completion rule |
 | --- | --- | --- |
 | **Inference Engine Spine** | Build the systems, concurrency, correctness, and measurement foundation through the serving engine — phases 0–6, with the CUDA kernel bench (step A) and the decoder (step G) built inside the same repo | Must stay green; nothing else activates at the cost of a skipped gate here |
-| **Quant Anchors** | Keep Orderbook and Backtester sharp: the deepening queue plus AI steps H (feature layer), B (point-in-time datasets), C (training literacy), D (evaluation rigor) | Gated on each project's own prerequisites; pauses whenever the engine spine needs the hours |
+| **Quant Anchors** | Keep Orderbook and Backtester sharp: the deepening queue, the ingestion ladder, plus AI steps H (feature layer), B (point-in-time datasets), C (training literacy), D (evaluation rigor) | Gated on each project's own prerequisites; pauses whenever the engine spine needs the hours |
 
 The learning loop for every phase is:
 
@@ -106,7 +108,7 @@ The learning loop for every phase is:
 
 **On the clock — there isn't one.** The sizes above are *ratios*, not a schedule. Read them as: Phase 0 is the bulk of the commitment, roughly equal to everything after it combined; each build phase is about one unit of work. The table exists so you know the shape of what you're signing up for and what to cut first when life compresses it. Track **hours per category** (rule 3), not weeks elapsed. A phase that takes twice as long and lands green is not behind schedule; a phase that lands on time with a skipped gate is.
 
-The **Quant Anchors** run alongside: H→B→C→D are small items on Orderbook and Backtester, gated on their own prerequisites, and they pause whenever the engine spine needs the hours — the pause is built into the design, not a failure of it.
+The **Quant Anchors** run alongside: H→B→C→D are small items on Orderbook and Backtester, gated on their own prerequisites, and they pause whenever the engine spine needs the hours — the pause is built into the design, not a failure of it. The one anchor item that is not small is the Orderbook's network-ingestion ladder ([`41-network-ingestion.md`](41-network-ingestion.md)), and it is sized in rungs precisely so it can pause without stranding anything: rungs 0–1 plus wire timestamps and the sanitizer CI ([`31-verification-and-observability.md`](31-verification-and-observability.md)) need no special hardware and are the always-available floor; rungs 2–3 need a NIC that supports them and are the first anchor work to pause.
 
 **Cut order if time runs short:**
 
@@ -138,7 +140,7 @@ The amendment proposed running H→B→C→D→A→G ahead of the risk engine's 
 - Not a model-serving framework — one model (GPT-2 124M), one backend by default. ONNX Runtime is an optional second backend and the first thing cut.
 - Not an ML project — the model is a fixed, well-understood checkpoint and a deliberate placeholder. The work is the serving and performance layer; say exactly that when probed.
 - Not a training system — no fine-tuning, no distributed training, no NCCL. Know the vocabulary, claim the boundary.
-- Not kernel bypass — explain *why* it exists (syscall/context-switch overhead); don't demo it.
+- Not kernel bypass **in this repo** — explain *why* it exists (syscall/context-switch overhead, measured in Phase 2) and know the physics cold. The engine's ingress stays a loopback request stream by design; the build lives where a real feed exists, in the Orderbook's ingestion ladder ([`41-network-ingestion.md`](41-network-ingestion.md)). One repo builds it, one repo explains it, and no claim is made in the wrong one.
 - **Not distributed at all, deliberately.** One process, one node, a loopback load generator — no replication, no consensus, no multi-node anything. This is a real boundary for AI-platform roles, where the hiring signal is distributed systems rather than single-node work. State it as a boundary in interviews rather than hiding it, and note the cheap extension if that door becomes primary: DDIA ch. 5–6 plus one small distributed artifact (a replicated log, or a sharded service with a failover path). Do not add it pre-emptively.
 - Not an AVX2 showcase — the design-doc Q&A bullets prove literacy; the build adds little.
 

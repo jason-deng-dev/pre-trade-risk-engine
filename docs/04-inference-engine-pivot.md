@@ -163,3 +163,14 @@ inference-engine/
 4. Phase docs 11, 13, and 15 are edited per §5; `16-phase-6-scheduler.md` exists before phase 1 starts, so the scheduler's hooks (KV allocator interface, backend interface) are in the phase-1 design.
 5. `20-ai-extension.md` is edited per §7. The pre-pivot risk-engine spec is not deleted — it lives in git history before the v4 commit, and the 15c3-5 angle remains a quant-only differentiator worth a future cycle.
 6. Commit history carries the arcs: kernels ladder rung-by-rung, then the decoder with its correctness gate, then gateway, then scheduler. Nothing lands before the thing it depends on.
+
+## 13. Addendum (2026-10-10) — kernel bypass, scoped
+
+The pivot parked kernel bypass as explain-only, and the master's non-goals list says the same. **That decision is scoped to this repo and this addendum makes the scope explicit**, because two other documents were written on the assumption that the keyword is permanently unclaimable.
+
+- **This repo** keeps a loopback request stream. The reasoning is structural, not budgetary: a load generator is a *client simulator*, so bypassing the kernel for it removes cost from the wrong side of the measurement.
+- **The Orderbook** gains a real ingestion ladder ([`41-network-ingestion.md`](41-network-ingestion.md)) — AF_XDP in rungs, NIC hardware timestamps, a real ITCH message mix. A market-data feed is the one place in this portfolio where the kernel path is the measured bottleneck, which is exactly the condition the original non-goal named as its own exception.
+- **Resume consequence:** "kernel bypass" moves from the never-add list to a conditional keyword — defensible on the Orderbook block once a rung ships, and permanently off the engine block. The updated rule lives in [`90-resumes.md`](90-resumes.md); the design-doc Q&A in [`15-phase-5-docs.md`](15-phase-5-docs.md) is re-scoped to match.
+- **Also added in this cycle:** the sanitizer CI matrix, which is repo-agnostic and covers all three ([`31-verification-and-observability.md`](31-verification-and-observability.md)); the eBPF observation-cost measurement, which is engine-side and gated on the gateway existing; and one correction to the AI spine — step B's dataset layer is stored as memory-mapped Parquet rather than CSV (see [`20-ai-extension.md`](20-ai-extension.md)).
+
+Nothing in §10's cut order changes: these are anchor workstreams and rungs, and they pause before any engine item does.

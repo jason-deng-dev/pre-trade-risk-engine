@@ -60,7 +60,7 @@ Read COD as the structured second source (see the [Reading Map](01-reading-map.m
 - **Super-linear speedup**: N CPUs exceed N× when a working set fits the aggregate cache but not one core's — warm beats cold; migration re-colds. (Banked from OSTEP ch. 10 hw Q7 — concept only.) Same physics as your pinning experiment.
 - **Guarantee math**: starving job needs ≥ f of CPU with quantum q → boost/rebalance interval ≤ q/f (10ms, 5% → every 200ms). One-liner, not a derivation. (OSTEP ch. 8 hw Q5.)
 - Linux scheduling vocabulary: CFS = vruntime, slice = sched_latency/n with min_granularity floor, nice→weights, sleepers reset to tree-min on wake; CFS was default until Linux 6.6 → now EEVDF. (Lottery/stride = theory behind fair share; MLFQ = the other paradigm.)
-- Kernel bypass: why does it exist? (your ch. 6 syscall-cost knowledge.) Huge pages: when do they HURT? Why your 9800X3D can't show remote-atomic cost but a 2-socket machine can.
+- Kernel bypass: why does it exist? (your ch. 6 syscall-cost knowledge — the explanation is graded here, and built on real hardware in [`41-network-ingestion.md`](41-network-ingestion.md).) Huge pages: when do they HURT? Why your 9800X3D can't show remote-atomic cost but a 2-socket machine can.
 - Event loop vs spinning receiver; what io_uring solved (post-dates OSTEP ch. 33).
 - MESI at the protocol level (false-sharing mechanism; remote atomic ~5× local). Dense array vs hash: footprint vs pointer chasing, cache-level crossover. SIMD: gather/scatter, AVX2 vs AVX-512 downclocking, lane semantics.
 

@@ -13,7 +13,13 @@ Match the Orderbook/Backtester entries: verb-led, mechanism stated, measured num
 
 **Bracket rule:** any bullet with an unfilled placeholder ships as the fallback — an `[X]` on a resume is worse than a shorter line.
 
-**Keyword discipline — what NOT to add:** industry terms you haven't built (FIX/ITCH/OUCH parsing, kernel bypass, DPDK, RDMA, FPGA) are probe-bait, not signal — every one converts a defensible bullet into a question you can't survive. They live in the design doc's industry-context Q&A and in interview answers attached to your measurements, never on the page. **One honest exception:** the feed bullet may say "ITCH-style sequenced binary protocol" — defensible, and "no, I modeled rather than parsed ITCH, and here's the tradeoff" is itself a good interview answer.
+**Keyword discipline — what NOT to add:** industry terms you haven't built (FIX/OUCH parsing, DPDK, RDMA, FPGA) are probe-bait, not signal — every one converts a defensible bullet into a question you can't survive. They live in the design doc's industry-context Q&A and in interview answers attached to your measurements, never on the page.
+
+**Conditional tier (v4.1) — keywords that graduate when the code lands, and only on the project that built them:** *kernel bypass* and *ITCH parsing* are no longer permanent exclusions. `41-network-ingestion.md` builds both on the Orderbook, so:
+
+- **ITCH:** the feed bullet may say "ITCH-style" today, with "I modelled rather than parsed ITCH, here's the tradeoff" as the answer. Once the real file runs the same harness, it upgrades to "parsed NASDAQ ITCH 5.0 (MoldUDP64 framing, sequence-gap handling) and replayed a real message mix" — on the Orderbook block, with the boundary that it is a sample file, not a production feed handler.
+- **Kernel bypass:** stays off the page until a rung ships, then appears **only on the Orderbook block**, in the form the rung supports ("AF_XDP user-space data path, copy mode" is a different and equally honest claim from "zero-copy"). It never appears on the engine block — that repo's ingress is loopback by design ([`00-master.md`](00-master.md) non-goals).
+- **Still excluded regardless of anything:** DPDK and RDMA, unless built. Explaining them well is a design-doc answer, not a page claim.
 
 ---
 
@@ -34,6 +40,7 @@ Run against the repos on this machine by grepping the code each claim names. **S
 | `null ensembles separating signal from luck` | **target** | zero `null`/`permutation` hits |
 | `point-in-time datasets → PyTorch → ONNX → walk-forward` | **target** | zero `torch`/`onnx`/`point-in-time`/`walk-forward`/`leakage` hits |
 | GPU Monte Carlo (CUDA, T4), CPU↔GPU bit-identical | **target — no fallback** | zero `cuda`/`hip`/`__global__`/`nvcc`/`rocm` hits across `include src tests CMakeLists.txt CMakePresets.json` |
+| Arrow/Parquet point-in-time dataset layer | **target** | zero `arrow`/`parquet` hits (2026-10-10); step B carries the format decision, [`20-ai-extension.md`](20-ai-extension.md) |
 
 ### Orderbook
 
@@ -45,6 +52,10 @@ Run against the repos on this machine by grepping the code each claim names. **S
 | Generational slot map for the order-ID index | **target** | the order index is `std::map<int, Order>` — `include/orders.h:33` |
 | PMR-pooled intrusive FIFO per level | **target** | zero `pmr`/`intrusive`/pool hits |
 | OFI / microprice / queue-position feature layer | **target** | zero `microprice`/`imbalance`/`queuePosition` hits |
+| AF_XDP kernel-bypass ingestion | **target** | zero `xdp`/`af_xdp` hits; the spec and its rung ladder are [`41-network-ingestion.md`](41-network-ingestion.md) |
+| Wire-to-wire, hardware-timestamped latency | **target** | no `SO_TIMESTAMPING`/PHC code; NIC capability unverified (`ethtool -T` is step 0) |
+| Parsed NASDAQ ITCH 5.0 message mix | **target** | zero `itch`/`moldudp` hits; the feed is modelled, not parsed |
+| Linear-vs-binary-vs-branchless search comparison | **target** | planned in `Orderbook/docs/specs.md`; `orderbook_vector.h` uses `std::lower_bound` today |
 
 ### Inference engine (v4 pivot, adopted 2026-10-09)
 
@@ -93,6 +104,7 @@ B.Sc. (Honours), Economics, Minor in Computer Science & Mathematics — Universi
 - Replaced std::map prototype with the flat ladder (3.9× throughput, 1.18M → 4.55M msgs/sec) and the order index with a generational slot map (cancel p50 [125→N]ns) — fills bit-identical across rewrites on the 1M-message replay.
 - Benchmarked 12 op paths (Google Benchmark): p50 add 142ns, cancel 125ns, 3-level sweep 357ns; p99 within ~3% of p50.
 - Zero-alloc feature layer (order-flow imbalance, microprice, queue-position estimate) at [X] msgs/sec, feeding the backtester's signal inputs.
+- Replaced the loopback feed with an AF_XDP user-space data path at rung [R]: kernel-stack cycles per message [A]→[B] (perf-verified), syscalls per message [N]→0, wire-to-book p99.9 [C]ns against NIC hardware timestamps; fills bit-identical to the socket path on the same recorded stream.
 
 **Backtesting + Monte Carlo Engine — C++17** (github.com/jason-deng-dev/Backtester)
 
@@ -100,7 +112,7 @@ B.Sc. (Honours), Economics, Minor in Computer Science & Mathematics — Universi
 - Validated edge with trade-level Monte Carlo (CIs on EV, drawdown, terminal equity), Markov regime switching, and null ensembles separating signal from luck.
 - GPU Monte Carlo at [N]× the 16-thread CPU path (CUDA, cloud T4), seeded replay bit-identical across CPU and GPU.
 - Parallelized across [C] cores by index-partitioned writes with per-run seeding: serial and parallel samplers agree bit-for-bit under test, [S]× speedup on [C] cores.
-- Model pipeline: leakage-free point-in-time datasets → PyTorch training → ONNX export → walk-forward evaluation with null-ensemble validation.
+- Model pipeline: leakage-free point-in-time datasets stored as memory-mapped Parquet, handed to PyTorch zero-copy through the Arrow C Data Interface → ONNX export → walk-forward evaluation with null-ensemble validation.
 
 **Low-Latency Inference Engine — C++17** (repo) — *framed for this page as systems evidence; the serving-layer bullets live in Appendix B*
 
@@ -110,7 +122,7 @@ B.Sc. (Honours), Economics, Minor in Computer Science & Mathematics — Universi
 - Verification: [10M] fuzzed request sequences differential-tested against a reference implementation with zero divergences; TSan-clean lock-free SPSC ledger with decisions bit-identical across runs and thread counts.
 - Driven end-to-end from an open-loop load generator over a loopback TCP request stream; per-stage latency measured coordinated-omission-correct.
 
-**Editing rules:** cut adjectives, tool-drops, redundant tails — never numbers, never "bit-identical", never method names. Cut order under pressure: engine bullet 5 (load generator) → engine bullet 3 (ablation) → backtester parallel bullet. One page, always.
+**Editing rules:** cut adjectives, tool-drops, redundant tails — never numbers, never "bit-identical", never method names. Cut order under pressure: engine bullet 5 (load generator) → engine bullet 3 (ablation) → backtester parallel bullet. The Orderbook ingestion bullet ([41](41-network-ingestion.md)) is the one line that is *first* to cut on page pressure and *last* to cut on content value: it is the strongest single line on this page if a rung ships, and it is nothing if none does. One page, always.
 
 **Bracket fallbacks (current, per rule 1 — an unfilled `[X]` ships as the shorter line):** engine bullet 1 drops the `[A]× … same harness` parenthetical, keeping "sub-microsecond O(1) admission control". Engine bullet 2 drops the cross-node clause if `[D]` is unfilled, keeping the layout and interposition clauses. Engine bullet 3 drops the two ablation factors and the line goes with them. Engine bullet 4 drops the fuzz/differential clause if `[10M]` is unfilled, keeping the TSan/bit-identical clauses. Engine bullet 5 drops entirely until the load generator exists. Orderbook bullet 3 drops the `[125 → N]ns` parenthetical. Orderbook bullet 4 drops entirely if `[X]` is unfilled. Backtester bullet 3 (GPU) does not ship at all until step A exists in the repo: as of 2026-09-29 `grep -rniE "cuda|hip/|__global__|nvcc|rocm"` over `include src tests CMakeLists.txt` returns zero hits, so there is no fallback for that bullet, only deletion. Backtester bullet 4 drops entirely if `[S]×` and `[C]` are unfilled.
 
@@ -150,7 +162,7 @@ Skills: C++17/20 · CUDA · Python/PyTorch · ONNX Runtime · Linux (perf, NUMA,
 **Backtesting + Monte Carlo Engine — C++17** (github.com/jason-deng-dev/Backtester)
 
 - GPU-accelerated Monte Carlo (CUDA): [N]× path throughput vs. CPU, bit-identical seeded replay across CPU/GPU, Nsight-profiled on cloud T4.
-- End-to-end ML pipeline: leakage-free point-in-time datasets → PyTorch training → ONNX export → walk-forward evaluation with null-ensemble validation.
+- End-to-end ML pipeline: leakage-free point-in-time datasets stored as memory-mapped Parquet and handed to PyTorch zero-copy through the Arrow C Data Interface → ONNX export → walk-forward evaluation with null-ensemble validation.
 - Parallelized across [C] cores by index-partitioned writes with per-run seeding: serial and parallel samplers agree bit-for-bit under test, [S]× speedup on [C] cores.
 - C++17 simulation engine: zero-alloc CSV ingest, pluggable strategy components, lot-level accounting with per-position statistics.
 
@@ -160,10 +172,13 @@ Skills: C++17/20 · CUDA · Python/PyTorch · ONNX Runtime · Linux (perf, NUMA,
 - Replaced std::map with the flat ladder (3.9× throughput, 1.18M → 4.55M msgs/sec) and the order index with a generational slot map (cancel p50 [125→N]ns) — fills bit-identical across rewrites on the 1M-message replay.
 - Benchmarked 12 op paths: p50 add 142ns, cancel 125ns, 3-level sweep 357ns; p99 within ~3% of p50.
 - Zero-alloc feature-computation layer (order-flow imbalance, microprice, queue position) at [X] msgs/sec — feeds the backtester's signal inputs.
+- AF_XDP user-space ingestion at rung [R]: kernel-stack cycles per message [A]→[B], syscalls per message [N]→0, wire-to-book p99.9 [C]ns against NIC hardware timestamps; fills bit-identical to the socket path on the same recorded stream; real ITCH 5.0 message mix replayed through the same harness.
 
 **Editing rules:** the skills strip is the FIRST cut under space pressure (bullets carry the keywords). Never submit as "ML engineer" — boundary discipline applies to applications too. Engine-block cut order: correctness line → kernels line → gateway ablation clause. The decoder and scheduler bullets are the block's reason to exist; they go last.
 
 **Engine bracket fallbacks:** every engine bullet is a target until the code exists. An engine bullet with an unfilled bracket ships as its shorter form or not at all — and the block's lead-in line ships only when the first two subsystems (kernels and decoder) are measurable.
+
+**Orderbook ingestion bullet:** ships at the rung that was actually measured, and **names the rung** — "AF_XDP" with no mode is the claim an interviewer dismantles in one question ("copy or zero-copy?"). If no rung ships, the existing loopback wording stays and the bullet does not exist. Same for the ITCH clause: it appears only once a real file has run the same harness.
 
 **Underused asset (added 2026-09-28): the GoodSoft bullets are framed as automation work, and for AI-infra and platform roles they should be framed as distributed-systems operations work** — six services, the interfaces and failure modes between them, rate limiting and a proxy layer as defence in depth, and incident ownership as the retained consultant. It is the only entry on the page that proves you have operated something in production and been accountable for it when it broke, which is the thing most junior candidates cannot claim. It currently reads as a side note. One rewriting pass at application time: same facts, distributed-systems vocabulary, no invented specifics.
 

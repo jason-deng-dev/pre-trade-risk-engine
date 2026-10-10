@@ -48,7 +48,7 @@ Weighting: ~70% coding/systems, ~20% design + math, ~10% behavioral/domain. Cove
 - **IO:** blocking/non-blocking, `select`/`poll`/`epoll` (LT/ET), reactor, `io_uring` (SQ/CQ), `SO_BUSY_POLL`, zero-copy (`sendfile`, `splice`)
 - Allocation: malloc internals (bins/tcache), mmap threshold, fragmentation, pools/arenas/slabs, jemalloc/tcmalloc
 - Observability: `strace`/`ltrace`, `/proc` (maps, smaps, status), `perf stat/record/top`, `vmstat`, `numastat`
-- Kernel-bypass concepts (DPDK, AF_XDP, ef_vi — know why, not how)
+- Kernel-bypass: **AF_XDP is built** on the Orderbook ([`41-network-ingestion.md`](41-network-ingestion.md)) — UMEM, the four rings, copy vs. zero-copy modes, generic vs. native XDP, `SO_BUSY_POLL`, hardware timestamps. DPDK and ef_vi stay know-why-not-how (mechanism and boundary, no build claim)
 
 *Coverage: OSTEP spine. Second-strongest axis.*
 
@@ -69,11 +69,11 @@ Weighting: ~70% coding/systems, ~20% design + math, ~10% behavioral/domain. Cove
 
 - Stack vocabulary: L2/L3/L4 roles (frames/MAC, IP/routing, TCP/UDP)
 - **TCP:** segments, handshake/teardown states, seq/ack, retransmission (RTT/RTO), flow control (rwnd), congestion control (slow start, AIMD, CUBIC/BBR), **head-of-line blocking**, Nagle + delayed-ACK interaction, keepalive, SACK/timestamps
-- **UDP:** header, checksum weakness, MTU/fragmentation (why avoid); *quant vocabulary only:* multicast (class D, IGMP, joins, loopback) — the v4 engine does not build this, so it is boundary knowledge attached to Orderbook, never a build claim
+- **UDP:** header, checksum weakness, MTU/fragmentation (why avoid); multicast (class D, IGMP, joins) — the engine does not build this, but the **Orderbook does** ([`41-network-ingestion.md`](41-network-ingestion.md)): a loopback multicast feed carried to a real NIC in measured rungs, ending in an AF_XDP user-space path
 - **The transport split, both directions (v4):** TCP for the engine's request/response path — flow control as backpressure, head-of-line blocking as a design constraint to reason about — and UDP market data / TCP order entry as quant vocabulary you can defend without having built it. Expect the question phrased either way
 - API depth: non-blocking + `EAGAIN`, partial send/recv, `MSG_*` flags, latency-relevant `SO_*` (RCVBUF/SNDBUF/REUSEADDR/REUSEPORT/BUSY_POLL/TCP_NODELAY), `shutdown` vs `close`, `SO_ERROR`
-- Kernel path: interrupt → NAPI → softirq → socket buffer → wakeup; kernel bypass & `io_uring` for networking
-- Protocols: binary framing (length-prefix vs delimiters) as built; FIX shape (tag=value, session seqnums, heartbeats, gap fill/resend) and ITCH/OUCH/PITCH/SBE as *quant vocabulary* — read-only, no build claim
+- Kernel path: interrupt → NAPI → softirq → socket buffer → wakeup; **what AF_XDP removes from that path and what it does not** — measured, per-stage, on the Orderbook ([`41-network-ingestion.md`](41-network-ingestion.md)); `io_uring` for networking
+- Protocols: binary framing (length-prefix vs delimiters) as built; **ITCH 5.0 + MoldUDP64 is a build claim** once a real sample file runs the Orderbook's harness — sequence numbers, heartbeats, and gap fill/resend are the same vocabulary FIX uses, so one implementation covers both answers ([`41-network-ingestion.md`](41-network-ingestion.md)). FIX/OUCH/PITCH/SBE stay *read-only vocabulary* — no build claim
 - Measurement: RTT anatomy, bandwidth-delay product, bufferbloat, **propagation ≈ 5µs/km**, serialization delay
 
 *Coverage: Top-Down structured + Phase 3 + Beej's.*

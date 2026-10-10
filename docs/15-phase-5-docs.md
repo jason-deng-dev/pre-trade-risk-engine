@@ -14,6 +14,7 @@
 - **The scheduler section — stub it here, fill it in phase 6** (phase 5 runs first in the v4 sequence; leave the heading and the questions in place so phase 6 appends rather than improvises): the rung ladder and its measured deltas, the KV-budget arithmetic on your machine, the admission projection, the chunked-prefill decision, scheduler overhead per admission, and the **FP non-associativity / output-equality** writeup — why batched kernels can differ in the last bits, what your gate therefore proves, and where the guarantee stops.
 - **The decoder correctness story.** Single-stream token-for-token against llama.cpp first, concurrency second; why the KV allocator sits behind an interface and what that buys.
 - **The kernel ladder.** Rung-by-rung numbers against the roofline, the occupancy sweep, and the quantized kernel's measured throughput gain and accuracy cost.
+- **The observation-cost section** (from [`31-verification-and-observability.md`](31-verification-and-observability.md)): what it costs to watch a sub-microsecond path — the measured uprobe perturbation, why tracing was replaced by an in-band seqlock-published histogram, and which observations were kept in eBPF because they cannot perturb the path (syscall counts, off-CPU time, migrations). This is the section that answers "how would you debug this in production?" with a measurement instead of a tool name.
 - The README, design doc, raw benchmark outputs, fuzz/TSan evidence, replay hashes, and batching tables together form the **core proof pack** referenced by the career timeline in [`92-algorithms-and-career.md`](92-algorithms-and-career.md).
 
 **Design doc appendix — "Industry context" Q&A** (the home for the keywords that must NOT go on the resume, each answered from your own measured system):
@@ -25,7 +26,7 @@
 - **Speculative decoding**: know the vocabulary and the tradeoff (draft model cost vs. tokens accepted); don't claim a build.
 - **Distributed inference (tensor/pipeline parallelism, NCCL)**: boundary answer — single-node, deliberately; state why the boundary is honest for this project.
 - **Serving stacks you did not build (HTTP/2, gRPC, Triton, Ray Serve)**: one paragraph each on what problem they solve, framed against your simple binary protocol.
-- **Kernel bypass / DPDK / RDMA**: the mechanism is your Phase 2 measurement (syscall + copy overhead); frame: "I know the measured cost these eliminate; I didn't demo them because the point is the physics, and the physics I have."
+- **Kernel bypass / DPDK / RDMA**: the mechanism is your Phase 2 measurement (syscall + copy overhead). Frame it with the scope stated: this repo's ingress is loopback *by design* — the bypass build lives in the Orderbook ([`41-network-ingestion.md`](41-network-ingestion.md)), where a market-data feed makes the kernel path the measured bottleneck. So: "I know the measured cost these eliminate, I built the AF_XDP version where it applies, and here is why it does not apply to a load generator." **DPDK and RDMA stay explain-only** — know the mechanisms (poll-mode drivers; kernel-bypass verbs, one-sided operations, and why RDMA needs a lossless fabric), and say plainly that you did not build them.
 
 **📖 Post-project queue — only after shipping, sized for interview prep:**
 
